@@ -1,0 +1,66 @@
+import React from 'react';
+
+import { Box, Grid, Card, Chip, Button, Typography, CardContent } from '@mui/material';
+
+const columns = [
+  { title: 'Backlog', color: 'default', projects: [] },
+  { title: 'Planned', color: 'info', projects: ['WCS & Setup Sandbox', 'Project Merge Services'] },
+  {
+    title: 'In Progress',
+    color: 'primary',
+    projects: [
+      'New Agilis ASRS (React)',
+      'PLC Mitsu',
+      'Testing New Agilis ASRS (React)',
+      'ASRS Stock Counting',
+      'PLC SANDBOX',
+    ],
+  },
+  { title: 'Completed', color: 'success', projects: [] },
+  { title: 'Cancelled', color: 'error', projects: [] },
+  {
+    title: 'On Hold',
+    color: 'warning',
+    projects: ['New HMI Nanjing', 'PLC Mitsu Test', 'Planogram Simulation X'],
+  },
+];
+
+const KanbanBoard = () => (
+  <Box sx={{ p: 3 }}>
+    <Typography variant="h4" gutterBottom>
+      🚀 2025 Operation Program
+    </Typography>
+    <Typography variant="subtitle1" gutterBottom>
+      Streamline engineering projects.
+    </Typography>
+    <Grid container spacing={2}>
+      {columns.map((col) => (
+        <Grid item xs={12} sm={6} md={2} key={col.title}>
+          <Card variant="outlined">
+            <CardContent>
+              <Chip label={col.title} color={col.color} sx={{ mb: 1 }} />
+              {col.projects.length > 0 ? (
+                col.projects.map((project) => (
+                  <Card key={project} sx={{ mb: 1, p: 1, background: '#f5f5f5' }}>
+                    <Typography variant="body2">{project}</Typography>
+                  </Card>
+                ))
+              ) : (
+                <Typography variant="body2" color="textSecondary">
+                  + New project
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+    <Box sx={{ mt: 3 }}>
+      <Button variant="contained" color="primary">
+        + New
+      </Button>
+    </Box>
+  </Box>
+);
+
+export default KanbanBoard;
