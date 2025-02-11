@@ -58,6 +58,7 @@ const BoardView = () => {
     };
 
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // โหลดครั้งเดียวตอน mount
 
   const handleTabChange = (event, newValue) => {
