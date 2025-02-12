@@ -9,7 +9,6 @@ import {
   Button,
   Dialog,
   MenuItem,
-  Checkbox,
   TextField,
   DialogTitle,
   DialogContent,
@@ -27,7 +26,7 @@ export default function AddProject({ open, onClose }) {
     status: '',
     owner: '',
     priority: '',
-    team: [],
+    team: '',
     work: '',
     start_date: '',
     link: '',
@@ -79,63 +78,49 @@ export default function AddProject({ open, onClose }) {
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    if (name === 'team') {
-      // สำหรับ multi-select ให้แน่ใจว่า value เป็น array
-      setFormData((prev) => ({ ...prev, [name]: value || [] })); // Ensure it's an array
-    } else {
-      // สำหรับฟิลด์ที่ไม่ใช่ multi-select
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Handle form submission to create TaskTracker
   const handleCreateTaskTracker = async (e) => {
     e.preventDefault();
 
-    // ตรวจสอบข้อมูลในฟอร์มก่อนส่ง
+    // Validate form data before sending
     if (
       !formData.projectName ||
       !formData.status ||
       !formData.priority ||
-      !formData.team.length ||
+      !formData.team ||
       !formData.work ||
       !formData.start_date
     ) {
-      console.error('กรุณากรอกข้อมูลที่จำเป็นทั้งหมด');
+      console.error('All required fields must be filled out.');
       return;
     }
 
-    // เตรียมข้อมูลสำหรับการส่งไปยัง API
     const taskData = {
       projectName: formData.projectName,
       problem: formData.problem,
       statusId: dropdownOptions.statuses.find((status) => status.name === formData.status)?.id,
       priorityId: dropdownOptions.priorities.find((priority) => priority.name === formData.priority)
         ?.id,
-      teamIds: formData.team
-        .map((teamName) => dropdownOptions.teams.find((team) => team.name === teamName)?.id)
-        .filter((id) => id), // Ensure teamIds is an array
+      teamId: dropdownOptions.teams.find((team) => team.name === formData.team)?.id,
       ownerId: dropdownOptions.owners.find((owner) => owner.name === formData.owner)?.id,
       comment: formData.comment,
       link: formData.link,
-      createDate: new Date(), // Assuming you want to set the createDate to current time
       startDate: formData.start_date,
-      endDate: formData.end_date, // If you have an end date
+      work: formData.work,
     };
-
-    // Check taskData before sending
-    console.log('Sending data to create task tracker:', taskData);
 
     try {
       const result = await createTaskTracker(taskData);
       if (result) {
-        console.log('สร้าง TaskTracker สำเร็จ');
+        console.log('TaskTracker created successfully');
         onClose();
         router.push('/dashboard'); // ไปที่หน้า dashboard
       }
     } catch (error) {
-      console.error('เกิดข้อผิดพลาดในการสร้าง TaskTracker:', error);
+      console.error('Error creating TaskTracker:', error);
     }
   };
 
@@ -246,19 +231,15 @@ export default function AddProject({ open, onClose }) {
                 select
                 label="Team"
                 name="team"
-                value={formData.team || []} // Ensure it's an array
+                value={formData.team}
                 onChange={handleChange}
                 fullWidth
                 required
                 margin="normal"
-                SelectProps={{
-                  multiple: true, // Allow multiple selection
-                }}
               >
                 {dropdownOptions.teams.length > 0 ? (
                   dropdownOptions.teams.map((option) => (
                     <MenuItem key={option.id} value={option.name}>
-                      <Checkbox checked={formData.team.includes(option.name)} />
                       {option.name}
                     </MenuItem>
                   ))
