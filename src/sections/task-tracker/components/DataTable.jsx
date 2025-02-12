@@ -1,319 +1,480 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'; // ✅ ใช้ next/navigation
 import React, { useState, useEffect } from 'react';
 
+import { DataGrid } from '@mui/x-data-grid';
+import AddIcon from '@mui/icons-material/Add';
+import FlashOnIcon from '@mui/icons-material/FlashOn';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import {
   Box,
-  Grid,
+  Tab,
+  Chip,
+  Tabs,
   Button,
   Dialog,
+  Select,
   MenuItem,
   TextField,
+  IconButton,
+  Typography,
   DialogTitle,
+  FormControl,
   DialogContent,
+  DialogActions,
 } from '@mui/material';
 
-import { fetchAllData, createTaskTracker } from '../../../services/fetchData'; // For dropdown data
+import AddProject from './add-project';
+import {
+  updateWork,
+  fetchAllData,
+  updateStatus,
+  updateProblem,
+  updateComment,
+  fetchTaskTrackers,
+} from '../../../services/fetchData';
 
-export default function AddProject({ open, onClose }) {
-  const router = useRouter();
-
-  // State for form data and dropdown options
-  const [formData, setFormData] = useState({
-    projectName: '',
-    problem: '',
-    status: '',
-    owner: '',
-    priority: '',
-    team: '',
-    work: '',
-    start_date: '',
-    link: '',
-    comment: '',
-  });
-
-  const [dropdownOptions, setDropdownOptions] = useState({
-    statuses: [],
-    priorities: [],
-    owners: [],
-    teams: [],
-  });
+export default function DataTable() {
+  const [isMounted, setIsMounted] = useState(false);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [statusMap, setStatusMap] = useState({});
+  const [priorityMap, setPriorityMap] = useState({});
+  const [ownerMap, setOwnerMap] = useState({});
+  const [teamMap, setTeamMap] = useState({});
+  const [taskTrackersData, setTaskTrackersData] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [selectedField, setSelectedField] = useState('');
+  const [selectedValue, setSelectedValue] = useState('');
+  const [selectedRowId, setSelectedRowId] = useState(null);
+  const [openAddModal, setOpenAddModal] = useState(false);
+  const [openStatusDialog, setOpenStatusDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState(1); // Default tab is "All Projects"
+  const router = useRouter(); // ✅ เปลี่ยนมาใช้ next/navigation
+  const [openAddProjectModal, setOpenAddProjectModal] = useState(false);
 
   useEffect(() => {
-    const getData = async () => {
-      try {
-        const data = await fetchAllData();
-        console.log('Fetched dropdown data:', data); // Log the fetched data to verify
-        if (data) {
-          setDropdownOptions({
-            statuses: Object.keys(data.statuses).map((key) => ({
-              id: key,
-              name: data.statuses[key],
-            })),
-            priorities: Object.keys(data.priorities).map((key) => ({
-              id: key,
-              name: data.priorities[key],
-            })),
-            owners: Object.keys(data.owners).map((key) => ({
-              id: key,
-              name: data.owners[key],
-            })),
-            teams: Object.keys(data.teams).map((key) => ({
-              id: key,
-              name: data.teams[key],
-            })),
-          });
-        } else {
-          console.error('Failed to load dropdown data');
-        }
-      } catch (error) {
-        console.error('Error fetching dropdown data:', error);
-      }
-    };
-
-    getData();
+    setIsMounted(true);
   }, []);
 
-  // Handle input changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      const data = await fetchAllData();
 
-  // Handle form submission to create TaskTracker
-  const handleCreateTaskTracker = async (e) => {
-    e.preventDefault();
+      if (data) {
+        setStatusMap(data.statuses);
+      }
 
-    // Validate form data before sending
-    if (
-      !formData.projectName ||
-      !formData.status ||
-      !formData.priority ||
-      !formData.team ||
-      !formData.work ||
-      !formData.start_date
-    ) {
-      console.error('All required fields must be filled out.');
-      return;
-    }
+      const taskTrackers = await fetchTaskTrackers();
 
-    const taskData = {
-      projectName: formData.projectName,
-      problem: formData.problem,
-      statusId: dropdownOptions.statuses.find((status) => status.name === formData.status)?.id,
-      priorityId: dropdownOptions.priorities.find((priority) => priority.name === formData.priority)
-        ?.id,
-      teamId: dropdownOptions.teams.find((team) => team.name === formData.team)?.id,
-      ownerId: dropdownOptions.owners.find((owner) => owner.name === formData.owner)?.id,
-      comment: formData.comment,
-      link: formData.link,
-      startDate: formData.start_date,
-      work: formData.work,
+      console.log('taskTrackers:', taskTrackers); // ดูข้อมูลที่ได้จาก taskTrackers
+
+      if (taskTrackers) {
+        const formattedRows = taskTrackers.map((item) => {
+          console.log('teamData:', item.teamData); // ตรวจสอบข้อมูลของ teamData
+
+          return {
+            id: item.trackerId,
+            projectName: item.projectName,
+            problem: item.problem,
+            status: item.status?.statusName || 'N/A',
+            owner: item.owner?.ownerName || 'N/A',
+            priority: item.priority?.priorityName || 'N/A',
+            team: item.team?.teamName || 'N/A',
+            teamDataIds: item.teamData?.map((team) => team.teamDataId) || [],
+            teamIds: item.teamData?.map((team) => team.teamId) || [], // ตรวจสอบว่า teamId อยู่ในนี้หรือไม่
+            work: item.work,
+            start_date: item.startDate,
+            link: item.link || 'N/A',
+            comment: item.comment || '',
+          };
+        });
+
+        setRows(formattedRows);
+
+        const teamData = taskTrackers.map((item) => item.team?.teamName).filter(Boolean);
+        setTeamMap(teamData);
+      }
+      setLoading(false);
     };
 
+    loadData();
+  }, []);
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+    switch (newValue) {
+      case 0:
+        router.push('/status');
+        break;
+
+      case 2:
+        router.push('/active-projects');
+        break;
+      case 3:
+        router.push('/timeline');
+        break;
+      case 4:
+        router.push('/dashboard/board'); // ✅ อัปเดตเส้นทางให้ไปที่ /dashboard/board
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleStatusClick = (params) => {
+    setSelectedRowId(params.id);
+    setSelectedValue(params.row.status);
+    setOpenStatusDialog(true);
+  };
+
+  const handleCellClick = (params, field) => {
+    setSelectedField(field);
+    setSelectedValue(params.value);
+    setSelectedRowId(params.id);
+    setOpen(true); // Open the dialog
+  };
+
+  const handleOpenDialog = () => {
+    setOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+    setSelectedField('');
+    setSelectedValue('');
+    setSelectedRowId(null);
+  };
+
+  const handleSave = async () => {
+    if (selectedRowId && selectedValue) {
+      try {
+        let response;
+
+        if (selectedField === 'status') {
+          response = await updateStatus(selectedRowId, selectedValue);
+        } else if (selectedField === 'comment') {
+          response = await updateComment(selectedRowId, selectedValue);
+        } else if (selectedField === 'work') {
+          response = await updateWork(selectedRowId, selectedValue);
+        } else if (selectedField === 'problem') {
+          response = await updateProblem(selectedRowId, selectedValue);
+        }
+
+        if (response) {
+          setRows((prevRows) =>
+            prevRows.map((row) =>
+              row.id === selectedRowId ? { ...row, [selectedField]: selectedValue } : row
+            )
+          );
+          setOpen(false); // Close the dialog after saving
+        } else {
+          console.error(`Failed to update ${selectedField}`);
+        }
+      } catch (error) {
+        console.error(`Error updating ${selectedField}:`, error);
+      }
+    }
+  };
+
+  if (!isMounted) {
+    return null; // Or a loading state if necessary
+  }
+
+  const columns = [
+    { field: 'projectName', headerName: 'Project Name', flex: 1 },
+    {
+      field: 'problem',
+      headerName: 'Problem',
+      flex: 1,
+      renderCell: (params) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <Typography
+            variant="body2"
+            onClick={() => handleCellClick(params, 'problem')}
+            sx={{
+              cursor: 'pointer',
+            }}
+          >
+            {params.value.length > 20 ? `${params.value.substring(0, 20)}...` : params.value}
+          </Typography>
+        </Box>
+      ),
+    },
+    // {
+    //   field: 'status',
+    //   headerName: 'Status',
+    //   flex: 1,
+    //   renderCell: (params) => (
+    //     <Chip
+    //       label={params.value}
+    //       color={
+    //         params.value === 'In progress'
+    //           ? 'primary'
+    //           : params.value === 'On Hold'
+    //             ? 'warning'
+    //             : params.value === 'Completed'
+    //               ? 'success'
+    //               : params.value === 'Cancelled'
+    //                 ? 'error'
+    //                 : 'default'
+    //       }
+    //       onClick={() => handleCellClick(params, 'status')} // Make it clickable
+    //     />
+    //   ),
+    // },
+    {
+      field: 'status',
+      headerName: 'Status',
+      flex: 1,
+      renderCell: (params) => (
+        <Chip
+          label={params.value}
+          color={
+            params.value === 'In progress'
+              ? 'primary'
+              : params.value === 'On Hold'
+                ? 'warning'
+                : params.value === 'Completed'
+                  ? 'success'
+                  : params.value === 'Cancelled'
+                    ? 'error'
+                    : 'default'
+          }
+          onClick={() => handleStatusClick(params)} // เปิด Dialog สำหรับสถานะ
+          sx={{ cursor: 'pointer' }}
+        />
+      ),
+    },
+    { field: 'owner', headerName: 'Owner', flex: 1 },
+    {
+      field: 'priority',
+      headerName: 'Priority',
+      flex: 1,
+      renderCell: (params) => (
+        <Chip
+          label={params.value}
+          color={
+            params.value === 'High' ? 'error' : params.value === 'Medium' ? 'warning' : 'primary'
+          }
+        />
+      ),
+    },
+    { field: 'team', headerName: 'Team', flex: 1 },
+    {
+      field: 'teamIds',
+      headerName: 'Team IDs',
+      flex: 1,
+      renderCell: (params) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <Typography variant="body2">
+            {params.value.length > 0 ? params.value.join(', ') : 'No Team IDs'}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      field: 'work',
+      headerName: '% Work',
+      flex: 1,
+      renderCell: (params) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <Typography
+            variant="body2"
+            onClick={() => handleCellClick(params, 'work')}
+            sx={{
+              cursor: 'pointer',
+            }}
+          >
+            {params.value}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      field: 'start_date',
+      headerName: 'Date',
+      flex: 1,
+      renderCell: (params) => (params.value ? params.value : 'N/A'),
+    },
+    {
+      field: 'link',
+      headerName: 'Link',
+      flex: 0.5,
+      renderCell: (params) =>
+        params.value && params.value !== 'N/A' ? (
+          <a href={params.value} target="_blank" rel="noopener noreferrer">
+            {params.value}
+          </a>
+        ) : (
+          'N/A'
+        ),
+    },
+    {
+      field: 'comment',
+      headerName: 'Comment',
+      flex: 1,
+      renderCell: (params) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <Typography variant="body2" onClick={() => handleCellClick(params, 'comment')}>
+            {params.value}
+          </Typography>
+        </Box>
+      ),
+    },
+  ];
+
+  // const handleOpenAddModal = () => {
+  //   setOpenAddModal(true);
+  // };
+
+  // const handleCloseAddModal = () => {
+  //   setOpenAddModal(false);
+  // };
+
+  const handleSaveNewProject = (newData) => {
+    setRows((prevRows) => [...prevRows, { id: `temp-${prevRows.length}`, ...newData }]);
+    handleCloseAddModal();
+  };
+
+  const handleSaveStatus = async () => {
     try {
-      const result = await createTaskTracker(taskData);
-      if (result) {
-        console.log('TaskTracker created successfully');
-        onClose();
-        router.push('/dashboard'); // ไปที่หน้า dashboard
+      if (!selectedRowId || !selectedValue) {
+        return;
+      }
+      const response = await updateStatus(selectedRowId, selectedValue);
+
+      if (response) {
+        setRows((prevRows) =>
+          prevRows.map(
+            (row) => (row.id === selectedRowId ? { ...row, status: statusMap[selectedValue] } : row) // ใช้ statusMap เพื่อแปลง statusId กลับเป็น status name
+          )
+        );
+        setOpenStatusDialog(false);
+      } else {
+        console.error('Failed to update status');
       }
     } catch (error) {
-      console.error('Error creating TaskTracker:', error);
+      console.error('Error saving status:', error);
     }
+  };
+
+  const handleOpenAddModal = () => {
+    setOpenAddProjectModal(true);
+  };
+
+  const handleCloseAddModal = () => {
+    setOpenAddProjectModal(false);
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
-      <DialogTitle>Add New Project</DialogTitle>
-      <DialogContent sx={{ padding: 2 }}>
-        <form onSubmit={handleCreateTaskTracker}>
-          <Grid container spacing={2}>
-            {/* Form Fields */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Project Name"
-                name="projectName"
-                value={formData.projectName}
-                onChange={handleChange}
-                fullWidth
-                required
-                margin="normal"
-              />
-            </Grid>
+    <Box>
+      <Tabs
+        value={activeTab}
+        onChange={handleTabChange}
+        variant="scrollable"
+        scrollButtons="auto"
+        aria-label="scrollable tabs"
+      >
+        <Tab label="Status" />
+        <Tab label="All Projects" />
+        <Tab label="Active Projects" />
+        <Tab label="Timeline" />
+        <Tab label="Board" />
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Problem"
-                name="problem"
-                value={formData.problem}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={2}
-                margin="normal"
-              />
-            </Grid>
-
-            {/* Dropdown Fields for Status, Owner, Priority, Team */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                select
-                label="Status"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                fullWidth
-                required
-                margin="normal"
-              >
-                {dropdownOptions.statuses.length > 0 ? (
-                  dropdownOptions.statuses.map((option) => (
-                    <MenuItem key={option.id} value={option.name}>
-                      {option.name}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No statuses available</MenuItem>
-                )}
-              </TextField>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                select
-                label="Owner"
-                name="owner"
-                value={formData.owner}
-                onChange={handleChange}
-                fullWidth
-                required
-                margin="normal"
-              >
-                {dropdownOptions.owners.length > 0 ? (
-                  dropdownOptions.owners.map((option) => (
-                    <MenuItem key={option.id} value={option.name}>
-                      {option.name}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No owners available</MenuItem>
-                )}
-              </TextField>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                select
-                label="Priority"
-                name="priority"
-                value={formData.priority}
-                onChange={handleChange}
-                fullWidth
-                required
-                margin="normal"
-              >
-                {dropdownOptions.priorities.length > 0 ? (
-                  dropdownOptions.priorities.map((option) => (
-                    <MenuItem key={option.id} value={option.name}>
-                      {option.name}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No priorities available</MenuItem>
-                )}
-              </TextField>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                select
-                label="Team"
-                name="team"
-                value={formData.team}
-                onChange={handleChange}
-                fullWidth
-                required
-                margin="normal"
-              >
-                {dropdownOptions.teams.length > 0 ? (
-                  dropdownOptions.teams.map((option) => (
-                    <MenuItem key={option.id} value={option.name}>
-                      {option.name}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No teams available</MenuItem>
-                )}
-              </TextField>
-            </Grid>
-
-            {/* Other form fields like % Work, Start Date, Link, Comment */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="% Work"
-                name="work"
-                value={formData.work}
-                onChange={handleChange}
-                fullWidth
-                required
-                margin="normal"
-                type="number"
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Start Date"
-                name="start_date"
-                value={formData.start_date}
-                onChange={handleChange}
-                fullWidth
-                required
-                margin="normal"
-                type="date"
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Link"
-                name="link"
-                value={formData.link}
-                onChange={handleChange}
-                fullWidth
-                margin="normal"
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Comment"
-                name="comment"
-                value={formData.comment}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={2}
-                margin="normal"
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={12}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-                <Button variant="outlined" color="secondary" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="contained" color="primary">
-                  Save
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </form>
-      </DialogContent>
-    </Dialog>
+        {/* ใช้ Box เพื่อดันปุ่มไปทางขวา */}
+        <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+          <IconButton color="default">
+            <FilterListIcon />
+          </IconButton>
+          <IconButton color="default" onClick={() => window.location.reload()}>
+            <RefreshIcon />
+          </IconButton>
+          <IconButton color="default">
+            <FlashOnIcon />
+          </IconButton>
+          <IconButton color="default">
+            <MoreHorizIcon />
+          </IconButton>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleOpenAddModal} // ✅ เปิดโมดัลแทนการ redirect
+          >
+            Add Project
+          </Button>
+          <AddProject open={openAddProjectModal} onClose={handleCloseAddModal} />
+        </Box>
+      </Tabs>
+      <Box sx={{ height: 800, width: '100%', marginTop: 2 }}>
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          pageSizeOptions={[5, 10, 20]}
+          pagination
+          loading={loading}
+        />
+      </Box>
+      {/* Add Project Modal */}
+      {/* แก้สถานะ Modal */}
+      <Dialog
+        open={openStatusDialog}
+        onClose={() => setOpenStatusDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit Status</DialogTitle>
+        <DialogContent sx={{ padding: 2 }}>
+          <FormControl fullWidth>
+            <Select
+              value={selectedValue} // ให้ Select ใช้ selectedValue เพื่อแสดงสถานะปัจจุบันที่เลือก
+              onChange={(e) => setSelectedValue(e.target.value)} // อัปเดต selectedValue เมื่อเลือกใหม่
+            >
+              {Object.entries(statusMap).map(([key, statusName]) => (
+                <MenuItem key={key} value={key}>
+                  {' '}
+                  {/* ใช้ statusId เป็นค่า */}
+                  {statusName} {/* แสดงชื่อสถานะ */}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenStatusDialog(false)}>Cancel</Button>
+          <Button onClick={handleSaveStatus}>Save</Button>
+        </DialogActions>
+      </Dialog>
+      ;{/* Edit Modal */}
+      <Dialog open={open} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+        <DialogTitle>Edit {selectedField}</DialogTitle>
+        <DialogContent sx={{ padding: 2 }}>
+          <TextField
+            value={selectedValue}
+            onChange={(e) => setSelectedValue(e.target.value)}
+            fullWidth
+            multiline
+            rows={4}
+            sx={{
+              '& .MuiInputLabel-root': {
+                whiteSpace: 'nowrap',
+              },
+              '& .MuiInputBase-root': {
+                paddingTop: '0.75rem',
+              },
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSave}>Save</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }
