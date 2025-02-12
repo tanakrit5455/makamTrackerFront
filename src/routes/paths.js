@@ -45,9 +45,7 @@ export const paths = {
     root: ROOTS.DASHBOARD,
     two: `${ROOTS.DASHBOARD}/two`,
     three: `${ROOTS.DASHBOARD}/three`,
-    components: {
-      addProject: '/components/AddProject', // เส้นทางสำหรับหน้า AddProject
-    },
+
     group: {
       root: `${ROOTS.DASHBOARD}/group`,
       five: `${ROOTS.DASHBOARD}/group/five`,

@@ -37,7 +37,6 @@ export const fetchAllData = async () => {
       }, {}),
     };
   } catch (error) {
-    console.error('Error fetching data:', error);
     return null;
   }
 };
@@ -47,7 +46,6 @@ export const fetchTaskTrackers = async () => {
     const response = await fetch(`${baseURL}/task-trackers/getall-trackers`);
     return await response.json();
   } catch (error) {
-    console.error('Error fetching task trackers:', error);
     return [];
   }
 };
@@ -58,15 +56,12 @@ export const fetchOwners = async () => {
     console.log(response.result);
     return await response.json();
   } catch (error) {
-    console.error('Error fetching owners:', error);
     return [];
   }
 };
 
 export const updateProblem = async (id, newProblem) => {
   try {
-    console.log(`Request to update problem for TaskTracker ${id}: New value = ${newProblem}`);
-
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ problem: newProblem }),
@@ -74,13 +69,9 @@ export const updateProblem = async (id, newProblem) => {
     });
 
     const result = await response.json();
-    console.log(`Response from server: ${JSON.stringify(result)}`);
-
     if (!response.ok) {
       throw new Error(result.message || 'Error updating problem');
     }
-
-    console.log(`Successfully updated problem for TaskTracker ${id}.`);
     return result;
   } catch (error) {
     console.error(`Failed to update problem for TaskTracker ${id}. Error: ${error.message}`);
@@ -90,8 +81,6 @@ export const updateProblem = async (id, newProblem) => {
 
 export const updateWork = async (id, newWork) => {
   try {
-    console.log(`Request to update work for TaskTracker ${id}: New value = ${newWork}`);
-
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ work: newWork }),
@@ -140,6 +129,9 @@ export const updateComment = async (id, newComment) => {
 
 export const createTaskTracker = async (taskData) => {
   try {
+    // แสดงข้อมูลที่จะส่งไปใน log
+    console.log('Sending data to create task tracker:', taskData);
+
     const response = await fetch(`${baseURL}/task-trackers/create-trackers`, {
       method: 'POST',
       body: JSON.stringify(taskData),
@@ -151,8 +143,13 @@ export const createTaskTracker = async (taskData) => {
     const result = await response.json();
 
     if (!response.ok) {
+      // ถ้าการส่งข้อมูลล้มเหลว ให้แสดง error message ใน log
+      console.error('Failed to create task tracker:', result.message || 'Unknown error');
       throw new Error(result.message || 'Failed to create task tracker');
     }
+
+    // แสดงข้อมูลที่ได้รับจาก API
+    console.log('Task tracker created successfully:', result);
 
     return result;
   } catch (error) {
@@ -169,7 +166,7 @@ export const updateStatus = async (id, newStatus) => {
     // ส่งคำขอ HTTP ไปยัง API ที่ backend
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ status: newStatus }), // ส่งสถานะใหม่ไปใน request body
+      body: JSON.stringify({ statusId: newStatus }), // เปลี่ยนจาก status เป็น statusId
       headers: { 'Content-Type': 'application/json' },
     });
 
@@ -187,3 +184,13 @@ export const updateStatus = async (id, newStatus) => {
     throw error; // แสดงข้อผิดพลาด
   }
 };
+
+// export const fetchTeams = async () => {
+//   try {
+//     const response = await fetch(`${baseURL}/teams//all-teams`); // Replace with actual URL
+//     return await response.json();
+//   } catch (error) {
+//     console.error('Error fetching teams:', error);
+//     return []; // Return empty array in case of an error
+//   }
+// };

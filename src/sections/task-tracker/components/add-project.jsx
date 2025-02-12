@@ -9,6 +9,7 @@ import {
   Button,
   Dialog,
   MenuItem,
+  Checkbox,
   TextField,
   DialogTitle,
   DialogContent,
@@ -26,7 +27,7 @@ export default function AddProject({ open, onClose }) {
     status: '',
     owner: '',
     priority: '',
-    team: '',
+    team: [],
     work: '',
     start_date: '',
     link: '',
@@ -42,16 +43,33 @@ export default function AddProject({ open, onClose }) {
 
   useEffect(() => {
     const getData = async () => {
-      const data = await fetchAllData();
-      if (data) {
-        setDropdownOptions({
-          statuses: Object.values(data.statuses),
-          priorities: Object.values(data.priorities),
-          owners: Object.values(data.owners),
-          teams: Object.values(data.teams),
-        });
-      } else {
-        console.error('Failed to load dropdown data');
+      try {
+        const data = await fetchAllData();
+        console.log('Fetched dropdown data:', data); // Log the fetched data to verify
+        if (data) {
+          setDropdownOptions({
+            statuses: Object.keys(data.statuses).map((key) => ({
+              id: key,
+              name: data.statuses[key],
+            })),
+            priorities: Object.keys(data.priorities).map((key) => ({
+              id: key,
+              name: data.priorities[key],
+            })),
+            owners: Object.keys(data.owners).map((key) => ({
+              id: key,
+              name: data.owners[key],
+            })),
+            teams: Object.keys(data.teams).map((key) => ({
+              id: key,
+              name: data.teams[key],
+            })),
+          });
+        } else {
+          console.error('Failed to load dropdown data');
+        }
+      } catch (error) {
+        console.error('Error fetching dropdown data:', error);
       }
     };
 
@@ -61,48 +79,63 @@ export default function AddProject({ open, onClose }) {
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === 'team') {
+      // สำหรับ multi-select ให้แน่ใจว่า value เป็น array
+      setFormData((prev) => ({ ...prev, [name]: value || [] })); // Ensure it's an array
+    } else {
+      // สำหรับฟิลด์ที่ไม่ใช่ multi-select
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   // Handle form submission to create TaskTracker
   const handleCreateTaskTracker = async (e) => {
     e.preventDefault();
 
-    // Validate form data before sending
+    // ตรวจสอบข้อมูลในฟอร์มก่อนส่ง
     if (
       !formData.projectName ||
       !formData.status ||
       !formData.priority ||
-      !formData.team ||
+      !formData.team.length ||
       !formData.work ||
       !formData.start_date
     ) {
-      console.error('All required fields must be filled out.');
+      console.error('กรุณากรอกข้อมูลที่จำเป็นทั้งหมด');
       return;
     }
 
+    // เตรียมข้อมูลสำหรับการส่งไปยัง API
     const taskData = {
       projectName: formData.projectName,
       problem: formData.problem,
-      statusId: formData.status,
-      priorityId: formData.priority,
-      teamId: formData.team,
-      ownerId: formData.owner,
+      statusId: dropdownOptions.statuses.find((status) => status.name === formData.status)?.id,
+      priorityId: dropdownOptions.priorities.find((priority) => priority.name === formData.priority)
+        ?.id,
+      teamIds: formData.team
+        .map((teamName) => dropdownOptions.teams.find((team) => team.name === teamName)?.id)
+        .filter((id) => id), // Ensure teamIds is an array
+      ownerId: dropdownOptions.owners.find((owner) => owner.name === formData.owner)?.id,
       comment: formData.comment,
       link: formData.link,
+      createDate: new Date(), // Assuming you want to set the createDate to current time
       startDate: formData.start_date,
-      work: formData.work,
+      endDate: formData.end_date, // If you have an end date
     };
+
+    // Check taskData before sending
+    console.log('Sending data to create task tracker:', taskData);
 
     try {
       const result = await createTaskTracker(taskData);
       if (result) {
-        console.log('TaskTracker created successfully');
+        console.log('สร้าง TaskTracker สำเร็จ');
         onClose();
-        router.push('/dashboard');
+        router.push('/dashboard'); // ไปที่หน้า dashboard
       }
     } catch (error) {
-      console.error('Error creating TaskTracker:', error);
+      console.error('เกิดข้อผิดพลาดในการสร้าง TaskTracker:', error);
     }
   };
 
@@ -150,11 +183,15 @@ export default function AddProject({ open, onClose }) {
                 required
                 margin="normal"
               >
-                {dropdownOptions.statuses.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
+                {dropdownOptions.statuses.length > 0 ? (
+                  dropdownOptions.statuses.map((option) => (
+                    <MenuItem key={option.id} value={option.name}>
+                      {option.name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No statuses available</MenuItem>
+                )}
               </TextField>
             </Grid>
 
@@ -169,11 +206,15 @@ export default function AddProject({ open, onClose }) {
                 required
                 margin="normal"
               >
-                {dropdownOptions.owners.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
+                {dropdownOptions.owners.length > 0 ? (
+                  dropdownOptions.owners.map((option) => (
+                    <MenuItem key={option.id} value={option.name}>
+                      {option.name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No owners available</MenuItem>
+                )}
               </TextField>
             </Grid>
 
@@ -188,11 +229,15 @@ export default function AddProject({ open, onClose }) {
                 required
                 margin="normal"
               >
-                {dropdownOptions.priorities.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
+                {dropdownOptions.priorities.length > 0 ? (
+                  dropdownOptions.priorities.map((option) => (
+                    <MenuItem key={option.id} value={option.name}>
+                      {option.name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No priorities available</MenuItem>
+                )}
               </TextField>
             </Grid>
 
@@ -201,17 +246,25 @@ export default function AddProject({ open, onClose }) {
                 select
                 label="Team"
                 name="team"
-                value={formData.team}
+                value={formData.team || []} // Ensure it's an array
                 onChange={handleChange}
                 fullWidth
                 required
                 margin="normal"
+                SelectProps={{
+                  multiple: true, // Allow multiple selection
+                }}
               >
-                {dropdownOptions.teams.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
+                {dropdownOptions.teams.length > 0 ? (
+                  dropdownOptions.teams.map((option) => (
+                    <MenuItem key={option.id} value={option.name}>
+                      <Checkbox checked={formData.team.includes(option.name)} />
+                      {option.name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No teams available</MenuItem>
+                )}
               </TextField>
             </Grid>
 

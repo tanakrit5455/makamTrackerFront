@@ -1,293 +1,293 @@
-'use client';
+// 'use client';
 
-import React, { useState, useEffect } from 'react';
+// import React, { useState, useEffect } from 'react';
 
-import { DataGrid } from '@mui/x-data-grid';
-import AddIcon from '@mui/icons-material/Add';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import FlashOnIcon from '@mui/icons-material/FlashOn';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import {
-  Box,
-  Chip,
-  Tabs,
-  Button,
-  Dialog,
-  TextField,
-  IconButton,
-  Typography,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from '@mui/material';
+// import { DataGrid } from '@mui/x-data-grid';
+// import AddIcon from '@mui/icons-material/Add';
+// import RefreshIcon from '@mui/icons-material/Refresh';
+// import FlashOnIcon from '@mui/icons-material/FlashOn';
+// import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+// import FilterListIcon from '@mui/icons-material/FilterList';
+// import {
+//   Box,
+//   Chip,
+//   Tabs,
+//   Button,
+//   Dialog,
+//   TextField,
+//   IconButton,
+//   Typography,
+//   DialogTitle,
+//   DialogContent,
+//   DialogActions,
+// } from '@mui/material';
 
-import { formatDateRange } from '../../../utils/formatDate';
-import {
-  updateWork,
-  fetchAllData,
-  updateProblem,
-  updateComment,
-  fetchTaskTrackers,
-} from '../../../services/fetchData';
+// import { formatDateRange } from '../../../utils/formatDate';
+// import {
+//   updateWork,
+//   fetchAllData,
+//   updateProblem,
+//   updateComment,
+//   fetchTaskTrackers,
+// } from '../../../services/fetchData';
 
-export default function DataTable() {
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [statusMap, setStatusMap] = useState({});
-  const [priorityMap, setPriorityMap] = useState({});
-  const [ownerMap, setOwnerMap] = useState({});
-  const [teamMap, setTeamMap] = useState({});
-  const [taskTrackersData, setTaskTrackersData] = useState([]);
-  const [open, setOpen] = useState(false);
-  const [selectedField, setSelectedField] = useState('');
-  const [selectedValue, setSelectedValue] = useState('');
-  const [selectedRowId, setSelectedRowId] = useState(null);
+// export default function DataTable() {
+//   const [rows, setRows] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [statusMap, setStatusMap] = useState({});
+//   const [priorityMap, setPriorityMap] = useState({});
+//   const [ownerMap, setOwnerMap] = useState({});
+//   const [teamMap, setTeamMap] = useState({});
+//   const [taskTrackersData, setTaskTrackersData] = useState([]);
+//   const [open, setOpen] = useState(false);
+//   const [selectedField, setSelectedField] = useState('');
+//   const [selectedValue, setSelectedValue] = useState('');
+//   const [selectedRowId, setSelectedRowId] = useState(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      const data = await fetchAllData();
-      if (data) {
-        setStatusMap(data.statuses);
-        setPriorityMap(data.priorities);
-        setOwnerMap(data.owners);
-        setTeamMap(data.teams);
-      }
-      const taskTrackers = await fetchTaskTrackers();
-      setTaskTrackersData(taskTrackers);
-      setLoading(false);
-    };
+//   useEffect(() => {
+//     const loadData = async () => {
+//       setLoading(true);
+//       const data = await fetchAllData();
+//       if (data) {
+//         setStatusMap(data.statuses);
+//         setPriorityMap(data.priorities);
+//         setOwnerMap(data.owners);
+//         setTeamMap(data.teams);
+//       }
+//       const taskTrackers = await fetchTaskTrackers();
+//       setTaskTrackersData(taskTrackers);
+//       setLoading(false);
+//     };
 
-    loadData();
-  }, []);
+//     loadData();
+//   }, []);
 
-  useEffect(() => {
-    if (taskTrackersData.length > 0) {
-      const mappedRows = taskTrackersData.map((row, index) => ({
-        id: row.trackerId || `temp-${index}`,
-        projectName: row.projectName,
-        problem: row.problem || 'No issue reported',
-        status: row.status?.statusName || 'Unknown',
-        owner: row.owner?.ownerName || 'N/A',
-        priority: row.priority?.priorityName || 'Unknown',
-        team: row.team?.teamName || 'N/A',
-        start_date: formatDateRange(row.startDate, row.endDate, row.createDate),
-        link: row.link ? row.link : 'N/A',
-        comment: row.comment !== undefined ? row.comment : 'No comment',
-        work: row.work !== undefined ? row.work : 'No work',
-      }));
+//   useEffect(() => {
+//     if (taskTrackersData.length > 0) {
+//       const mappedRows = taskTrackersData.map((row, index) => ({
+//         id: row.trackerId || `temp-${index}`,
+//         projectName: row.projectName,
+//         problem: row.problem || 'No issue reported',
+//         status: row.status?.statusName || 'Unknown',
+//         owner: row.owner?.ownerName || 'N/A',
+//         priority: row.priority?.priorityName || 'Unknown',
+//         team: row.team?.teamName || 'N/A',
+//         start_date: formatDateRange(row.startDate, row.endDate, row.createDate),
+//         link: row.link ? row.link : 'N/A',
+//         comment: row.comment !== undefined ? row.comment : 'No comment',
+//         work: row.work !== undefined ? row.work : 'No work',
+//       }));
 
-      setRows(mappedRows);
-    }
-  }, [taskTrackersData]);
+//       setRows(mappedRows);
+//     }
+//   }, [taskTrackersData]);
 
-  const handleOpenDialog = (field, value, id) => {
-    setSelectedField(field);
-    setSelectedValue(value);
-    setSelectedRowId(id);
-    setOpen(true);
-  };
+//   const handleOpenDialog = (field, value, id) => {
+//     setSelectedField(field);
+//     setSelectedValue(value);
+//     setSelectedRowId(id);
+//     setOpen(true);
+//   };
 
-  const handleCloseDialog = () => {
-    setOpen(false);
-    setSelectedField('');
-    setSelectedValue('');
-    setSelectedRowId(null);
-  };
+//   const handleCloseDialog = () => {
+//     setOpen(false);
+//     setSelectedField('');
+//     setSelectedValue('');
+//     setSelectedRowId(null);
+//   };
 
-  const handleSave = async () => {
-    if (selectedRowId && selectedValue) {
-      try {
-        console.log(
-          `Attempting to update ${selectedField} for TaskTracker ${selectedRowId} with value: ${selectedValue}`
-        );
+//   const handleSave = async () => {
+//     if (selectedRowId && selectedValue) {
+//       try {
+//         console.log(
+//           `Attempting to update ${selectedField} for TaskTracker ${selectedRowId} with value: ${selectedValue}`
+//         );
 
-        let response;
+//         let response;
 
-        // Choose the appropriate update function based on the selected field
-        if (selectedField === 'problem') {
-          response = await updateProblem(selectedRowId, selectedValue);
-        } else if (selectedField === 'work') {
-          console.log('Updating work field:', { work: selectedValue }); // Log the payload
-          response = await updateWork(selectedRowId, selectedValue);
-        } else if (selectedField === 'comment') {
-          response = await updateComment(selectedRowId, selectedValue);
-        }
+//         // Choose the appropriate update function based on the selected field
+//         if (selectedField === 'problem') {
+//           response = await updateProblem(selectedRowId, selectedValue);
+//         } else if (selectedField === 'work') {
+//           console.log('Updating work field:', { work: selectedValue }); // Log the payload
+//           response = await updateWork(selectedRowId, selectedValue);
+//         } else if (selectedField === 'comment') {
+//           response = await updateComment(selectedRowId, selectedValue);
+//         }
 
-        if (response) {
-          setRows((prevRows) =>
-            prevRows.map((row) =>
-              row.id === selectedRowId ? { ...row, [selectedField]: selectedValue } : row
-            )
-          );
-          console.log(`Successfully updated ${selectedField}`);
-          handleCloseDialog();
-        } else {
-          console.error(`Failed to update ${selectedField}`);
-        }
-      } catch (error) {
-        console.error(`Error updating ${selectedField}:`, error);
-      }
-    }
-  };
+//         if (response) {
+//           setRows((prevRows) =>
+//             prevRows.map((row) =>
+//               row.id === selectedRowId ? { ...row, [selectedField]: selectedValue } : row
+//             )
+//           );
+//           console.log(`Successfully updated ${selectedField}`);
+//           handleCloseDialog();
+//         } else {
+//           console.error(`Failed to update ${selectedField}`);
+//         }
+//       } catch (error) {
+//         console.error(`Error updating ${selectedField}:`, error);
+//       }
+//     }
+//   };
 
-  const handleCellClick = (params, field) => {
-    handleOpenDialog(field, params.value, params.id);
-  };
+//   const handleCellClick = (params, field) => {
+//     handleOpenDialog(field, params.value, params.id);
+//   };
 
-  const columns = [
-    { field: 'projectName', headerName: 'Project Name', flex: 1 },
-    {
-      field: 'problem',
-      headerName: 'Problem',
-      flex: 1,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Typography variant="body2" onClick={() => handleCellClick(params, '')}>
-            {params.value.length > 1000 ? `${params.value.substring(0, 1000)}...` : params.value}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      flex: 1,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={
-            params.value === 'In progress'
-              ? 'primary'
-              : params.value === 'On Hold'
-                ? 'warning'
-                : params.value === 'Completed'
-                  ? 'success'
-                  : params.value === 'Cancelled'
-                    ? 'error'
-                    : 'default'
-          }
-        />
-      ),
-    },
-    { field: 'owner', headerName: 'Owner', flex: 1 },
-    {
-      field: 'priority',
-      headerName: 'Priority',
-      flex: 1,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={
-            params.value === 'High' ? 'error' : params.value === 'Medium' ? 'warning' : 'primary'
-          }
-        />
-      ),
-    },
-    { field: 'team', headerName: 'Team', flex: 1 },
-    {
-      field: 'work',
-      headerName: '% Work',
-      flex: 1,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Typography variant="body2" onClick={() => handleCellClick(params, '')}>
-            {params.value}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      field: 'start_date',
-      headerName: 'Date',
-      flex: 1,
-      renderCell: (params) => (params.value ? params.value : 'N/A'),
-    },
-    {
-      field: 'link',
-      headerName: 'Link',
-      flex: 0.5,
-      renderCell: (params) =>
-        params.value && params.value !== 'N/A' ? (
-          <a href={params.value} target="_blank" rel="noopener noreferrer">
-            {params.value}
-          </a>
-        ) : (
-          'N/A'
-        ),
-    },
-    {
-      field: 'comment',
-      headerName: 'Comment',
-      flex: 1,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Typography variant="body2" onClick={() => handleCellClick(params, '')}>
-            {params.value}
-          </Typography>
-        </Box>
-      ),
-    },
-  ];
+//   const columns = [
+//     { field: 'projectName', headerName: 'Project Name', flex: 1 },
+//     {
+//       field: 'problem',
+//       headerName: 'Problem',
+//       flex: 1,
+//       renderCell: (params) => (
+//         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+//           <Typography variant="body2" onClick={() => handleCellClick(params, '')}>
+//             {params.value.length > 1000 ? `${params.value.substring(0, 1000)}...` : params.value}
+//           </Typography>
+//         </Box>
+//       ),
+//     },
+//     {
+//       field: 'status',
+//       headerName: 'Status',
+//       flex: 1,
+//       renderCell: (params) => (
+//         <Chip
+//           label={params.value}
+//           color={
+//             params.value === 'In progress'
+//               ? 'primary'
+//               : params.value === 'On Hold'
+//                 ? 'warning'
+//                 : params.value === 'Completed'
+//                   ? 'success'
+//                   : params.value === 'Cancelled'
+//                     ? 'error'
+//                     : 'default'
+//           }
+//         />
+//       ),
+//     },
+//     { field: 'owner', headerName: 'Owner', flex: 1 },
+//     {
+//       field: 'priority',
+//       headerName: 'Priority',
+//       flex: 1,
+//       renderCell: (params) => (
+//         <Chip
+//           label={params.value}
+//           color={
+//             params.value === 'High' ? 'error' : params.value === 'Medium' ? 'warning' : 'primary'
+//           }
+//         />
+//       ),
+//     },
+//     { field: 'team', headerName: 'Team', flex: 1 },
+//     {
+//       field: 'work',
+//       headerName: '% Work',
+//       flex: 1,
+//       renderCell: (params) => (
+//         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+//           <Typography variant="body2" onClick={() => handleCellClick(params, '')}>
+//             {params.value}
+//           </Typography>
+//         </Box>
+//       ),
+//     },
+//     {
+//       field: 'start_date',
+//       headerName: 'Date',
+//       flex: 1,
+//       renderCell: (params) => (params.value ? params.value : 'N/A'),
+//     },
+//     {
+//       field: 'link',
+//       headerName: 'Link',
+//       flex: 0.5,
+//       renderCell: (params) =>
+//         params.value && params.value !== 'N/A' ? (
+//           <a href={params.value} target="_blank" rel="noopener noreferrer">
+//             {params.value}
+//           </a>
+//         ) : (
+//           'N/A'
+//         ),
+//     },
+//     {
+//       field: 'comment',
+//       headerName: 'Comment',
+//       flex: 1,
+//       renderCell: (params) => (
+//         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+//           <Typography variant="body2" onClick={() => handleCellClick(params, '')}>
+//             {params.value}
+//           </Typography>
+//         </Box>
+//       ),
+//     },
+//   ];
 
-  return (
-    <Box sx={{ height: 650, width: '100%', padding: 2, backgroundColor: 'white' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Tabs value={0} textColor="primary" indicatorColor="primary" />
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton color="default" onClick={() => window.location.reload()}>
-            <RefreshIcon />
-          </IconButton>
-          <IconButton color="default">
-            <FilterListIcon />
-          </IconButton>
-          <IconButton color="default">
-            <FlashOnIcon />
-          </IconButton>
-          <IconButton color="default">
-            <MoreHorizIcon />
-          </IconButton>
-          <Button variant="contained" color="primary" startIcon={<AddIcon />}>
-            New
-          </Button>
-        </Box>
-      </Box>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        pageSizeOptions={[5, 10, 20]}
-        pagination
-        loading={loading}
-      />
+//   return (
+//     <Box sx={{ height: 650, width: '100%', padding: 2, backgroundColor: 'white' }}>
+//       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+//         <Tabs value={0} textColor="primary" indicatorColor="primary" />
+//         <Box sx={{ display: 'flex', gap: 1 }}>
+//           <IconButton color="default" onClick={() => window.location.reload()}>
+//             <RefreshIcon />
+//           </IconButton>
+//           <IconButton color="default">
+//             <FilterListIcon />
+//           </IconButton>
+//           <IconButton color="default">
+//             <FlashOnIcon />
+//           </IconButton>
+//           <IconButton color="default">
+//             <MoreHorizIcon />
+//           </IconButton>
+//           <Button variant="contained" color="primary" startIcon={<AddIcon />}>
+//             New
+//           </Button>
+//         </Box>
+//       </Box>
+//       <DataGrid
+//         rows={rows}
+//         columns={columns}
+//         pageSizeOptions={[5, 10, 20]}
+//         pagination
+//         loading={loading}
+//       />
 
-      <Dialog open={open} onClose={handleCloseDialog} fullWidth maxWidth="sm">
-        <DialogTitle>Edit {selectedField}</DialogTitle>
-        <DialogContent sx={{ padding: 2 }}>
-          <TextField
-            label={selectedField}
-            value={selectedValue}
-            onChange={(e) => setSelectedValue(e.target.value)}
-            fullWidth
-            multiline
-            rows={4}
-            sx={{
-              '& .MuiInputLabel-root': {
-                whiteSpace: 'nowrap',
-              },
-              '& .MuiInputBase-root': {
-                paddingTop: '0.75rem',
-              },
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSave} color="primary">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
-  );
-}
+//       <Dialog open={open} onClose={handleCloseDialog} fullWidth maxWidth="sm">
+//         <DialogTitle>Edit {selectedField}</DialogTitle>
+//         <DialogContent sx={{ padding: 2 }}>
+//           <TextField
+//             label={selectedField}
+//             value={selectedValue}
+//             onChange={(e) => setSelectedValue(e.target.value)}
+//             fullWidth
+//             multiline
+//             rows={4}
+//             sx={{
+//               '& .MuiInputLabel-root': {
+//                 whiteSpace: 'nowrap',
+//               },
+//               '& .MuiInputBase-root': {
+//                 paddingTop: '0.75rem',
+//               },
+//             }}
+//           />
+//         </DialogContent>
+//         <DialogActions>
+//           <Button onClick={handleCloseDialog}>Cancel</Button>
+//           <Button onClick={handleSave} color="primary">
+//             Save
+//           </Button>
+//         </DialogActions>
+//       </Dialog>
+//     </Box>
+//   );
+// }
