@@ -1,10 +1,11 @@
 // 'use client';
 
-// import { useRouter } from 'next/navigation'; // ✅ ใช้ next/navigation
+// import { useRouter } from 'next/navigation';
 // import React, { useState, useEffect } from 'react';
 
 // import { DataGrid } from '@mui/x-data-grid';
 // import AddIcon from '@mui/icons-material/Add';
+// import LinkIcon from '@mui/icons-material/Link';
 // import FlashOnIcon from '@mui/icons-material/FlashOn';
 // import RefreshIcon from '@mui/icons-material/Refresh';
 // import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
@@ -25,17 +26,27 @@
 //   FormControl,
 //   DialogContent,
 //   DialogActions,
+//   CircularProgress,
 // } from '@mui/material';
+
+// import { CONFIG } from 'src/config-global';
 
 // import AddProject from './add-project';
 // import { formatDateRange } from '../../../utils/formatDate';
 // import {
 //   updateWork,
+//   updateLink,
+//   updateOwner,
 //   updateStatus,
 //   updateProblem,
 //   updateComment,
+//   updateMeetingone,
+//   updateMeetingtwo,
+//   updateProjectName,
 //   fetchTaskTrackerWithTeamData,
 // } from '../../../actions/fetchData';
+
+// const baseURL = CONFIG.site.serverUrl;
 
 // export default function DataTable() {
 //   const [isMounted, setIsMounted] = useState(false);
@@ -52,9 +63,10 @@
 //   const [selectedRowId, setSelectedRowId] = useState(null);
 //   const [openAddModal, setOpenAddModal] = useState(false);
 //   const [openStatusDialog, setOpenStatusDialog] = useState(false);
-//   const [activeTab, setActiveTab] = useState(1); // Default tab is "All Projects"
-//   const router = useRouter(); // ✅ เปลี่ยนมาใช้ next/navigation
+//   const [activeTab, setActiveTab] = useState(1);
+//   const router = useRouter();
 //   const [openAddProjectModal, setOpenAddProjectModal] = useState(false);
+//   const [statusOptions, setStatusOptions] = useState([]);
 
 //   useEffect(() => {
 //     setIsMounted(true);
@@ -66,17 +78,14 @@
 
 //       try {
 //         const response = await fetchTaskTrackerWithTeamData();
-//         console.log('Fetched task trackers with team data:', response); // ✅ Debugging log
-
-//         // ตรวจสอบว่า result เป็นอาร์เรย์
 //         const taskTrackers = response?.result;
 //         if (Array.isArray(taskTrackers)) {
 //           const formattedRows = taskTrackers.map((item) => {
-//             console.log('teamData:', item?.teamData || 'No teamData'); // ✅ ตรวจสอบข้อมูลทีม
-
-//             // สร้างอาร์เรย์ของชื่อทีมจาก teamData
 //             const teamNames = Array.isArray(item.teamData)
-//               ? item.teamData.map((team) => team.team.teamName) // ใช้ teamName แทน teamId
+//               ? item.teamData.map((team) => team.team.teamName)
+//               : [];
+//             const ownerNames = Array.isArray(item.ownerData)
+//               ? item.ownerData.map((owner) => owner.owner.ownerName)
 //               : [];
 
 //             return {
@@ -90,11 +99,17 @@
 //               teamDataIds: Array.isArray(item.teamData)
 //                 ? item.teamData.map((team) => team.teamDataId)
 //                 : [],
-//               teamNames, // ใช้ชื่อทีมในคอลัมน์นี้
+//               teamNames, // ✅ เพิ่ม teamNames
+//               ownerDataIds: Array.isArray(item.ownerData)
+//                 ? item.ownerData.map((owner) => owner.ownerDataId)
+//                 : [],
+//               ownerNames, // ✅ เพิ่ม ownerNames
 //               work: item.work,
 //               start_date: formatDateRange(item.startDate, item.endDate, item.createDate),
 //               link: item.link || 'N/A',
 //               comment: item.comment || '',
+//               meetingone: item.meetingone || '',
+//               meetingtwo: item.meetingtwo || '',
 //             };
 //           });
 
@@ -116,6 +131,24 @@
 //     loadData();
 //   }, []);
 
+//   useEffect(() => {
+//     const fetchStatusData = async () => {
+//       try {
+//         const response = await fetch(`${baseURL}/statuses/all-statuses`);
+//         if (!response.ok) {
+//           throw new Error('Failed to fetch data');
+//         }
+//         const data = await response.json();
+//         setStatusOptions(data);
+//         setLoading(false);
+//       } catch (error) {
+//         console.error('Error fetching status data:', error);
+//         setLoading(false);
+//       }
+//     };
+//     fetchStatusData();
+//   }, []);
+
 //   const handleTabChange = (event, newValue) => {
 //     setActiveTab(newValue);
 //     switch (newValue) {
@@ -130,7 +163,7 @@
 //         router.push('/timeline');
 //         break;
 //       case 4:
-//         router.push('/dashboard/board'); // ✅ อัปเดตเส้นทางให้ไปที่ /dashboard/board
+//         router.push('/dashboard/board');
 //         break;
 //       default:
 //         break;
@@ -139,7 +172,9 @@
 
 //   const handleStatusClick = (params) => {
 //     setSelectedRowId(params.id);
-//     setSelectedValue(params.row.status);
+//     const selectedStatus = statusOptions.find((status) => status.statusName === params.value);
+//     setSelectedValue(selectedStatus ? selectedStatus.statusId : params.value);
+
 //     setOpenStatusDialog(true);
 //   };
 
@@ -164,6 +199,8 @@
 //   const handleSave = async () => {
 //     if (selectedRowId && selectedValue) {
 //       try {
+//         console.log('Attempting to save:', { selectedRowId, selectedValue, selectedField });
+
 //         let response;
 
 //         if (selectedField === 'status') {
@@ -174,21 +211,43 @@
 //           response = await updateWork(selectedRowId, selectedValue);
 //         } else if (selectedField === 'problem') {
 //           response = await updateProblem(selectedRowId, selectedValue);
+//         } else if (selectedField === 'meeting#1') {
+//           console.log('Updating meetingone');
+//           response = await updateMeetingone(selectedRowId, selectedValue);
+//         } else if (selectedField === 'meeting#2') {
+//           console.log('Updating meetingtwo');
+//           response = await updateMeetingtwo(selectedRowId, selectedValue);
+//         } else if (selectedField === 'link') {
+//           console.log('Updating Link');
+//           response = await updateLink(selectedRowId, selectedValue);
+//         } else if (selectedField === 'owner') {
+//           console.log('Updating Owner');
+//           response = await updateOwner(selectedRowId, selectedValue);
+//         } else if (selectedField === 'projectName') {
+//           console.log('Updating Owner');
+//           response = await updateProjectName(selectedRowId, selectedValue);
 //         }
+
+//         console.log('Response after save:', response);
 
 //         if (response) {
 //           setRows((prevRows) =>
 //             prevRows.map((row) =>
-//               row.id === selectedRowId ? { ...row, [selectedField]: selectedValue } : row
+//               row.id === selectedRowId
+//                 ? { ...row, [selectedField]: selectedValue } // แก้ไขข้อมูลในแถวที่เลือก
+//                 : row
 //             )
 //           );
 //           setOpen(false); // Close the dialog after saving
+//           console.log('Successfully saved');
 //         } else {
 //           console.error(`Failed to update ${selectedField}`);
 //         }
 //       } catch (error) {
 //         console.error(`Error updating ${selectedField}:`, error);
 //       }
+//     } else {
+//       console.error('Missing selectedRowId or selectedValue');
 //     }
 //   };
 
@@ -204,8 +263,38 @@
 //     Oparation: 'success',
 //   };
 
+//   const ownerColorMap = {
+//     Jockey: 'primary',
+//     Oat: 'secondary',
+//     Poogun: 'success',
+//     Aon: 'error',
+//     Tent: 'warning',
+//     Pooh: 'info',
+//     Nack: 'primary',
+//     Boy: 'secondary',
+//     Kung: 'success',
+//     Pai: 'error',
+//     Jiw: 'warning',
+//     Title: 'info',
+//     Aof: 'primary',
+//     Fuse: 'secondary',
+//     makam: 'success',
+//   };
+
 //   const columns = [
-//     { field: 'projectName', headerName: 'Project Name', flex: 1 },
+//     {
+//       field: 'projectName',
+//       headerName: 'Project Name',
+//       flex: 1,
+//       renderCell: (params) => (
+//         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+//           <Typography variant="body2" onClick={() => handleCellClick(params, 'projectName')}>
+//             {params.value}
+//           </Typography>
+//         </Box>
+//       ),
+//     },
+
 //     {
 //       field: 'problem',
 //       headerName: 'Problem',
@@ -250,26 +339,62 @@
 //       field: 'status',
 //       headerName: 'Status',
 //       flex: 1,
-//       renderCell: (params) => (
-//         <Chip
-//           label={params.value}
-//           color={
-//             params.value === 'In progress'
-//               ? 'primary'
-//               : params.value === 'On Hold'
-//                 ? 'warning'
-//                 : params.value === 'Completed'
-//                   ? 'success'
-//                   : params.value === 'Cancelled'
-//                     ? 'error'
-//                     : 'default'
-//           }
-//           onClick={() => handleStatusClick(params)} // เปิด Dialog สำหรับสถานะ
-//           sx={{ cursor: 'pointer' }}
-//         />
-//       ),
+//       renderCell: (params) => {
+//         // ✅ หา statusName จาก statusOptions ทันที
+//         const selectedStatus = statusOptions.find((status) => status.statusId === params.value);
+//         const statusName = selectedStatus ? selectedStatus.statusName : params.value;
+
+//         return (
+//           <Chip
+//             label={statusName}
+//             color={
+//               statusName === 'In progress'
+//                 ? 'primary'
+//                 : statusName === 'On Hold'
+//                   ? 'warning'
+//                   : statusName === 'Completed'
+//                     ? 'success'
+//                     : statusName === 'Cancelled'
+//                       ? 'error'
+//                       : 'default'
+//             }
+//             onClick={() => handleStatusClick(params)}
+//             sx={{ cursor: 'pointer' }}
+//           />
+//         );
+//       },
 //     },
-//     { field: 'owner', headerName: 'Owner', flex: 1 },
+
+//     {
+//       field: 'ownerNames',
+//       headerName: 'Owner',
+//       flex: 1,
+//       // renderCell: (params) => (
+//       //   <Box
+//       //     sx={{
+//       //       display: 'flex',
+//       //       alignItems: 'center',
+//       //       gap: 0.5, // ลดระยะห่างระหว่างไอเท็ม (ปรับค่า gap ตามต้องการ)
+//       //       height: '100%', // ทำให้ Box เต็มเซลล์
+//       //     }}
+//       //   >
+//       //     {params.value.map((ownerName, index) => (
+//       //       <Chip
+//       //         key={index}
+//       //         label={ownerName}
+//       //         sx={{
+//       //           border: 'none', // ไม่มีกรอบ
+//       //           background: 'none', // ไม่มีพื้นหลัง
+//       //           color: 'inherit', // ใช้สีของข้อความที่กำหนด
+//       //           fontWeight: 'normal', // ใช้ฟอนต์ปกติ
+//       //           margin: 0, // กำหนด margin ให้เป็น 0 เพื่อลดระยะห่าง
+//       //         }}
+//       //       />
+//       //     ))}
+//       //   </Box>
+//       // ),
+//     },
+//     // { field: 'owner', headerName: 'Owner', flex: 1 },
 //     {
 //       field: 'priority',
 //       headerName: 'Priority',
@@ -283,6 +408,7 @@
 //         />
 //       ),
 //     },
+
 //     {
 //       field: 'teamNames',
 //       headerName: 'Team',
@@ -343,14 +469,38 @@
 //       field: 'link',
 //       headerName: 'Link',
 //       flex: 0.5,
-//       renderCell: (params) =>
-//         params.value && params.value !== 'N/A' ? (
-//           <a href={params.value} target="_blank" rel="noopener noreferrer">
-//             {params.value}
-//           </a>
-//         ) : (
-//           'N/A'
-//         ),
+//       renderCell: (params) => (
+//         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+//           {params.value && params.value !== 'N/A' ? (
+//             <>
+//               {/* ไอคอนลิงก์ */}
+//               <LinkIcon
+//                 sx={{
+//                   cursor: 'pointer',
+//                   color: 'defult',
+//                   marginRight: '8px',
+//                 }}
+//                 onClick={() => window.open(params.value, '_blank')}
+//               />
+
+//               {/* ข้อความที่คลิกเพื่อเปิด dialog สำหรับแก้ไข */}
+//               <Typography
+//                 variant="body2"
+//                 onClick={() => handleCellClick(params, 'link')}
+//                 sx={{
+//                   cursor: 'pointer',
+//                   color: 'defult',
+//                   textDecoration: 'underline',
+//                 }}
+//               >
+//                 {params.value}
+//               </Typography>
+//             </>
+//           ) : (
+//             'N/A'
+//           )}
+//         </Box>
+//       ),
 //     },
 //     {
 //       field: 'comment',
@@ -359,6 +509,42 @@
 //       renderCell: (params) => (
 //         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
 //           <Typography variant="body2" onClick={() => handleCellClick(params, 'comment')}>
+//             {params.value}
+//           </Typography>
+//         </Box>
+//       ),
+//     },
+//     {
+//       field: 'meetingone',
+//       headerName: 'meeting#1',
+//       flex: 1,
+//       renderCell: (params) => (
+//         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+//           <Typography
+//             variant="body2"
+//             onClick={() => handleCellClick(params, 'meeting#1')}
+//             sx={{
+//               cursor: 'pointer',
+//             }}
+//           >
+//             {params.value}
+//           </Typography>
+//         </Box>
+//       ),
+//     },
+//     {
+//       field: 'meetingtwo',
+//       headerName: 'meeting#2',
+//       flex: 1,
+//       renderCell: (params) => (
+//         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+//           <Typography
+//             variant="body2"
+//             onClick={() => handleCellClick(params, 'meeting#2')}
+//             sx={{
+//               cursor: 'pointer',
+//             }}
+//           >
 //             {params.value}
 //           </Typography>
 //         </Box>
@@ -384,14 +570,21 @@
 //       if (!selectedRowId || !selectedValue) {
 //         return;
 //       }
-//       const response = await updateStatus(selectedRowId, selectedValue);
+
+//       const response = await updateStatus(selectedRowId, selectedValue); // อัปเดต API
 
 //       if (response) {
+//         const selectedStatus = statusOptions.find((status) => status.statusId === selectedValue);
+//         const statusName = selectedStatus ? selectedStatus.statusName : selectedValue;
+
 //         setRows((prevRows) =>
-//           prevRows.map(
-//             (row) => (row.id === selectedRowId ? { ...row, status: statusMap[selectedValue] } : row) // ใช้ statusMap เพื่อแปลง statusId กลับเป็น status name
+//           prevRows.map((row) =>
+//             row.id === selectedRowId
+//               ? { ...row, status: statusName } // ✅ ใช้ statusName โดยตรง
+//               : row
 //           )
 //         );
+
 //         setOpenStatusDialog(false);
 //       } else {
 //         console.error('Failed to update status');
@@ -453,7 +646,8 @@
 //         <DataGrid
 //           rows={rows}
 //           columns={columns}
-//           pageSizeOptions={[5, 10, 20]}
+//           pageSize={100}
+//           pageSizeOptions={[10, 25, 50, 100]}
 //           pagination
 //           loading={loading}
 //         />
@@ -469,23 +663,30 @@
 //         <DialogTitle>Edit Status</DialogTitle>
 //         <DialogContent sx={{ padding: 2 }}>
 //           <FormControl fullWidth>
-//             <Select
-//               value={selectedValue} // ให้ Select ใช้ selectedValue เพื่อแสดงสถานะปัจจุบันที่เลือก
-//               onChange={(e) => setSelectedValue(e.target.value)} // อัปเดต selectedValue เมื่อเลือกใหม่
-//             >
-//               {Object.entries(statusMap).map(([key, statusName]) => (
-//                 <MenuItem key={key} value={key}>
-//                   {' '}
-//                   {/* ใช้ statusId เป็นค่า */}
-//                   {statusName} {/* แสดงชื่อสถานะ */}
-//                 </MenuItem>
-//               ))}
-//             </Select>
+//             {loading ? (
+//               <CircularProgress />
+//             ) : (
+//               <Select value={selectedValue} onChange={(e) => setSelectedValue(e.target.value)}>
+//                 {statusOptions.map((status) => (
+//                   <MenuItem key={status.statusId} value={status.statusId}>
+//                     {status.statusName}
+//                   </MenuItem>
+//                 ))}
+//               </Select>
+//             )}
 //           </FormControl>
 //         </DialogContent>
 //         <DialogActions>
+//           <Button
+//             color="primary"
+//             onClick={() => {
+//               console.log('Save new status:', selectedValue);
+//               handleSaveStatus();
+//             }}
+//           >
+//             Save
+//           </Button>
 //           <Button onClick={() => setOpenStatusDialog(false)}>Cancel</Button>
-//           <Button onClick={handleSaveStatus}>Save</Button>
 //         </DialogActions>
 //       </Dialog>
 //       ;{/* Edit Modal */}
@@ -509,8 +710,10 @@
 //           />
 //         </DialogContent>
 //         <DialogActions>
+//           <Button color="primary" onClick={handleSave}>
+//             Save
+//           </Button>
 //           <Button onClick={handleCloseDialog}>Cancel</Button>
-//           <Button onClick={handleSave}>Save</Button>
 //         </DialogActions>
 //       </Dialog>
 //     </Box>

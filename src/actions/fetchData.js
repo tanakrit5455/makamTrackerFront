@@ -50,6 +50,15 @@ export const fetchTaskTrackers = async () => {
   }
 };
 
+export const fetchTaskTrackerWithTeamData = async () => {
+  try {
+    const response = await fetch(`${baseURL}/task-trackers/getall-trackerWithTeamData`);
+    return await response.json();
+  } catch (error) {
+    return [];
+  }
+};
+
 export const fetchOwners = async () => {
   try {
     const response = await fetch(`${baseURL}/owners/getall-owners`);
@@ -127,10 +136,143 @@ export const updateComment = async (id, newComment) => {
   }
 };
 
+export const updateMeetingone = async (id, newMeeetingone) => {
+  try {
+    console.log(
+      `Request to update meetingone for TaskTracker ${id}: New value = ${newMeeetingone}`
+    );
+
+    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ meetingone: newMeeetingone }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const result = await response.json();
+    console.log(`Response from server: ${JSON.stringify(result)}`);
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Error updating meetingone');
+    }
+
+    console.log(`Successfully updated meetingone for TaskTracker ${id}.`);
+    return result;
+  } catch (error) {
+    console.error(`Failed to update meetingone for TaskTracker ${id}. Error: ${error.message}`);
+    throw error;
+  }
+};
+
+export const updateMeetingtwo = async (id, newMeeetingtwo) => {
+  try {
+    console.log(
+      `Request to update meetingtwo for TaskTracker ${id}: New value = ${newMeeetingtwo}`
+    );
+
+    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ meetingtwo: newMeeetingtwo }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const result = await response.json();
+    console.log(`Response from server: ${JSON.stringify(result)}`);
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Error updating meetingtwo');
+    }
+
+    console.log(`Successfully updated meetingtwo for TaskTracker ${id}.`);
+    return result;
+  } catch (error) {
+    console.error(`Failed to update meetingtwo for TaskTracker ${id}. Error: ${error.message}`);
+    throw error;
+  }
+};
+
+export const updateLink = async (id, newLink) => {
+  try {
+    console.log(`Request to update link for TaskTracker ${id}: New value = ${newLink}`);
+
+    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ link: newLink }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const result = await response.json();
+    console.log(`Response from server: ${JSON.stringify(result)}`);
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Error updating link');
+    }
+
+    console.log(`Successfully updated link for TaskTracker ${id}.`);
+    return result;
+  } catch (error) {
+    console.error(`Failed to update link for TaskTracker ${id}. Error: ${error.message}`);
+    throw error;
+  }
+};
+
+export const updateOwner = async (id, newOwner) => {
+  try {
+    console.log(`Request to update owner for TaskTracker ${id}: New value = ${newOwner}`);
+
+    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ owner: newOwner }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const result = await response.json();
+    console.log(`Response from server: ${JSON.stringify(result)}`);
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Error updating owner');
+    }
+
+    console.log(`Successfully updated owner for TaskTracker ${id}.`);
+    return result;
+  } catch (error) {
+    console.error(`Failed to update owner for TaskTracker ${id}. Error: ${error.message}`);
+    throw error;
+  }
+};
+
+export const updateProjectName = async (id, newProjectName) => {
+  try {
+    console.log(
+      `Request to update projectName for TaskTracker ${id}: New value = ${newProjectName}`
+    );
+
+    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ projectName: newProjectName }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    console.log(`HTTP Status: ${response.status}`);
+
+    if (!response.ok) {
+      const errorResult = await response.text(); // Read response as text
+      console.error(`Server Error: ${errorResult}`);
+      throw new Error(`Error updating projectName: ${errorResult}`);
+    }
+
+    const result = await response.json();
+    console.log(`Response from server: ${JSON.stringify(result)}`);
+
+    return result;
+  } catch (error) {
+    console.error(`Failed to update projectName for TaskTracker ${id}. Error: ${error.message}`);
+    return null;
+  }
+};
+
 export const createTaskTracker = async (taskData) => {
   try {
-    // แสดงข้อมูลที่จะส่งไปใน log
-    console.log('Sending data to create task tracker:', taskData);
+    console.log('Sending data to create task tracker:', JSON.stringify(taskData, null, 2));
 
     const response = await fetch(`${baseURL}/task-trackers/create-trackers`, {
       method: 'POST',
@@ -143,12 +285,10 @@ export const createTaskTracker = async (taskData) => {
     const result = await response.json();
 
     if (!response.ok) {
-      // ถ้าการส่งข้อมูลล้มเหลว ให้แสดง error message ใน log
       console.error('Failed to create task tracker:', result.message || 'Unknown error');
       throw new Error(result.message || 'Failed to create task tracker');
     }
 
-    // แสดงข้อมูลที่ได้รับจาก API
     console.log('Task tracker created successfully:', result);
 
     return result;
@@ -181,6 +321,33 @@ export const updateStatus = async (id, newStatus) => {
     throw new Error(result.message || 'Error updating status');
   } catch (error) {
     console.error('Error updating status:', error);
+    throw error; // แสดงข้อผิดพลาด
+  }
+};
+
+export const updatePriority = async (id, newPriority) => {
+  try {
+    // Log ค่า id และ newStatus ก่อนที่จะส่งคำขอ
+    console.log(`Sending request to update priority for ID: ${id}, with status: ${newPriority}`);
+
+    // ส่งคำขอ HTTP ไปยัง API ที่ backend
+    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ priorityId: newPriority }), // เปลี่ยนจาก status เป็น statusId
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    const result = await response.json();
+
+    // Log ผลลัพธ์ของคำขอ
+    if (response.ok) {
+      console.log('Response from backend:', result);
+      return result; // ส่งผลลัพธ์กลับหลังจากอัปเดตสำเร็จ
+    }
+    console.error('Failed to update priority:', result.message);
+    throw new Error(result.message || 'Error updating priority');
+  } catch (error) {
+    console.error('Error updating priority:', error);
     throw error; // แสดงข้อผิดพลาด
   }
 };

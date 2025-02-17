@@ -20,7 +20,7 @@ import {
   CardContent,
 } from '@mui/material';
 
-import { fetchTaskTrackers } from '../../../services/fetchData';
+import { fetchTaskTrackers } from '../../../actions/fetchData';
 
 const BoardView = () => {
   const [activeTab, setActiveTab] = useState(4);

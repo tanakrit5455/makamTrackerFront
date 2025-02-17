@@ -1,5 +1,3 @@
-'use client';
-
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 
@@ -9,28 +7,29 @@ import {
   Button,
   Dialog,
   MenuItem,
+  Checkbox,
   TextField,
   DialogTitle,
   DialogContent,
 } from '@mui/material';
 
-import { fetchAllData, createTaskTracker } from '../../../services/fetchData'; // For dropdown data
+import { fetchAllData, createTaskTracker } from '../../../actions/fetchData';
 
 export default function AddProject({ open, onClose }) {
   const router = useRouter();
-
-  // State for form data and dropdown options
   const [formData, setFormData] = useState({
     projectName: '',
     problem: '',
     status: '',
-    owner: '',
+    ownerIds: [],
     priority: '',
-    team: '',
+    teamIds: [],
     work: '',
     start_date: '',
     link: '',
     comment: '',
+    end_date: '',
+    meetingone: '',
   });
 
   const [dropdownOptions, setDropdownOptions] = useState({
@@ -44,7 +43,6 @@ export default function AddProject({ open, onClose }) {
     const getData = async () => {
       try {
         const data = await fetchAllData();
-        console.log('Fetched dropdown data:', data); // Log the fetched data to verify
         if (data) {
           setDropdownOptions({
             statuses: Object.keys(data.statuses).map((key) => ({
@@ -74,50 +72,79 @@ export default function AddProject({ open, onClose }) {
 
     getData();
   }, []);
-
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'teamIds' || name === 'ownerIds') {
+      setFormData((prev) => ({ ...prev, [name]: value || [] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
-  // Handle form submission to create TaskTracker
   const handleCreateTaskTracker = async (e) => {
     e.preventDefault();
-
-    // Validate form data before sending
     if (
       !formData.projectName ||
       !formData.status ||
       !formData.priority ||
-      !formData.team ||
-      !formData.work ||
+      !formData.teamIds.length ||
+      !formData.ownerIds.length ||
+      !formData.meetingone ||
       !formData.start_date
     ) {
-      console.error('All required fields must be filled out.');
+      console.error('Please fill in all required fields.');
       return;
     }
+    const ownerEntities = formData.ownerIds
+      .map((ownerName) => {
+        const owner = dropdownOptions.owners.find((o) => o.name === ownerName);
+        return owner ? owner.id : null;
+      })
+      .filter(Boolean);
 
+    if (!ownerEntities.length) {
+      console.error('Owner(s) not found. Please select a valid owner.');
+      return;
+    }
+    const teamEntities = formData.teamIds
+      .map((teamName) => {
+        const team = dropdownOptions.teams.find((t) => t.name === teamName);
+        return team ? team.id : null;
+      })
+      .filter(Boolean);
+
+    if (!teamEntities.length) {
+      console.error('Team(s) not found. Please select a valid team.');
+      return;
+    }
     const taskData = {
       projectName: formData.projectName,
       problem: formData.problem,
-      statusId: dropdownOptions.statuses.find((status) => status.name === formData.status)?.id,
-      priorityId: dropdownOptions.priorities.find((priority) => priority.name === formData.priority)
-        ?.id,
-      teamId: dropdownOptions.teams.find((team) => team.name === formData.team)?.id,
-      ownerId: dropdownOptions.owners.find((owner) => owner.name === formData.owner)?.id,
+      statusId: parseInt(
+        dropdownOptions.statuses.find((status) => status.name === formData.status)?.id,
+        10
+      ),
+      priorityId: parseInt(
+        dropdownOptions.priorities.find((priority) => priority.name === formData.priority)?.id,
+        10
+      ),
+      ownerIds: ownerEntities,
+      teamIds: teamEntities,
       comment: formData.comment,
       link: formData.link,
-      startDate: formData.start_date,
-      work: formData.work,
+      createDate: new Date().toISOString(),
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      work: '0%',
+      meetingone: formData.meetingone,
     };
-
+    console.log('Task data being sent:', JSON.stringify(taskData, null, 2));
     try {
       const result = await createTaskTracker(taskData);
       if (result) {
         console.log('TaskTracker created successfully');
         onClose();
-        router.push('/dashboard'); // ไปที่หน้า dashboard
+        router.push('/dashboard');
       }
     } catch (error) {
       console.error('Error creating TaskTracker:', error);
@@ -168,15 +195,11 @@ export default function AddProject({ open, onClose }) {
                 required
                 margin="normal"
               >
-                {dropdownOptions.statuses.length > 0 ? (
-                  dropdownOptions.statuses.map((option) => (
-                    <MenuItem key={option.id} value={option.name}>
-                      {option.name}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No statuses available</MenuItem>
-                )}
+                {dropdownOptions.statuses.map((option) => (
+                  <MenuItem key={option.id} value={option.name}>
+                    {option.name}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
 
@@ -184,22 +207,20 @@ export default function AddProject({ open, onClose }) {
               <TextField
                 select
                 label="Owner"
-                name="owner"
-                value={formData.owner}
+                name="ownerIds"
+                value={formData.ownerIds}
                 onChange={handleChange}
                 fullWidth
                 required
                 margin="normal"
+                SelectProps={{ multiple: true }}
               >
-                {dropdownOptions.owners.length > 0 ? (
-                  dropdownOptions.owners.map((option) => (
-                    <MenuItem key={option.id} value={option.name}>
-                      {option.name}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No owners available</MenuItem>
-                )}
+                {dropdownOptions.owners.map((option) => (
+                  <MenuItem key={option.id} value={option.name}>
+                    <Checkbox checked={formData.ownerIds.includes(option.name)} />
+                    {option.name}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
 
@@ -214,15 +235,11 @@ export default function AddProject({ open, onClose }) {
                 required
                 margin="normal"
               >
-                {dropdownOptions.priorities.length > 0 ? (
-                  dropdownOptions.priorities.map((option) => (
-                    <MenuItem key={option.id} value={option.name}>
-                      {option.name}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No priorities available</MenuItem>
-                )}
+                {dropdownOptions.priorities.map((option) => (
+                  <MenuItem key={option.id} value={option.name}>
+                    {option.name}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
 
@@ -230,36 +247,33 @@ export default function AddProject({ open, onClose }) {
               <TextField
                 select
                 label="Team"
-                name="team"
-                value={formData.team}
+                name="teamIds"
+                value={formData.teamIds}
                 onChange={handleChange}
                 fullWidth
                 required
                 margin="normal"
+                SelectProps={{ multiple: true }}
               >
-                {dropdownOptions.teams.length > 0 ? (
-                  dropdownOptions.teams.map((option) => (
-                    <MenuItem key={option.id} value={option.name}>
-                      {option.name}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled>No teams available</MenuItem>
-                )}
+                {dropdownOptions.teams.map((option) => (
+                  <MenuItem key={option.id} value={option.name}>
+                    <Checkbox checked={formData.teamIds.includes(option.name)} />
+                    {option.name}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
 
-            {/* Other form fields like % Work, Start Date, Link, Comment */}
+            {/* Other form fields */}
             <Grid item xs={12} sm={6}>
               <TextField
-                label="% Work"
-                name="work"
-                value={formData.work}
+                label="Meeting#1"
+                name="meetingone"
+                value={formData.meetingone}
                 onChange={handleChange}
                 fullWidth
                 required
                 margin="normal"
-                type="number"
               />
             </Grid>
 
