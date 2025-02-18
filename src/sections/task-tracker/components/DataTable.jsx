@@ -137,10 +137,18 @@ export default function DataTable() {
   useEffect(() => {
     const fetchStatusData = async () => {
       try {
-        const response = await fetch(`${baseURL}/statuses/all-statuses`);
+        const response = await fetch(`${baseURL}/statuses/all-statuses`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
+
         const data = await response.json();
         setStatusOptions(data);
         setLoading(false);
@@ -149,16 +157,25 @@ export default function DataTable() {
         setLoading(false);
       }
     };
+
     fetchStatusData();
   }, []);
 
   useEffect(() => {
     const fetchPriorityData = async () => {
       try {
-        const response = await fetch(`${baseURL}/priorities/getall-priorities`);
+        const response = await fetch(`${baseURL}/priorities/getall-priorities`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
+
         const data = await response.json();
         setPriorityOptions(data);
       } catch (error) {
