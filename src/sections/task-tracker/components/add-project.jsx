@@ -134,7 +134,8 @@ export default function AddProject({ open, onClose }) {
       link: formData.link,
       // createDate: new Date().toISOString(),
       startDate: new Date().toISOString(),
-      endDate: formData.endDate,
+      endDate: formData.end_date ? new Date(formData.end_date).toISOString() : null,
+
       work: '0%',
       meetingone: formData.meetingone,
     };
@@ -277,11 +278,25 @@ export default function AddProject({ open, onClose }) {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={3}>
               <TextField
                 label="Start Date"
                 name="start_date"
                 value={formData.start_date}
+                onChange={handleChange}
+                fullWidth
+                required
+                margin="normal"
+                type="date"
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={3}>
+              <TextField
+                label="End Date"
+                name="end_date"
+                value={formData.end_date}
                 onChange={handleChange}
                 fullWidth
                 required
