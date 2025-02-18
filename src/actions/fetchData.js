@@ -74,7 +74,7 @@ export const updateProblem = async (id, newProblem) => {
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ problem: newProblem }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     });
 
     const result = await response.json();
@@ -93,7 +93,7 @@ export const updateWork = async (id, newWork) => {
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ work: newWork }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     });
 
     const result = await response.json();
@@ -118,7 +118,7 @@ export const updateComment = async (id, newComment) => {
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ comment: newComment }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     });
 
     const result = await response.json();
@@ -145,7 +145,7 @@ export const updateMeetingone = async (id, newMeeetingone) => {
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ meetingone: newMeeetingone }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     });
 
     const result = await response.json();
@@ -172,7 +172,7 @@ export const updateMeetingtwo = async (id, newMeeetingtwo) => {
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ meetingtwo: newMeeetingtwo }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     });
 
     const result = await response.json();
@@ -197,7 +197,7 @@ export const updateLink = async (id, newLink) => {
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ link: newLink }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     });
 
     const result = await response.json();
@@ -222,7 +222,7 @@ export const updateOwner = async (id, newOwner) => {
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ owner: newOwner }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     });
 
     const result = await response.json();
@@ -249,7 +249,7 @@ export const updateProjectName = async (id, newProjectName) => {
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ projectName: newProjectName }),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     });
 
     console.log(`HTTP Status: ${response.status}`);
@@ -307,7 +307,7 @@ export const updateStatus = async (id, newStatus) => {
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ statusId: newStatus }), // เปลี่ยนจาก status เป็น statusId
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     });
 
     const result = await response.json();
@@ -334,7 +334,7 @@ export const updatePriority = async (id, newPriority) => {
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ priorityId: newPriority }), // เปลี่ยนจาก status เป็น statusId
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     });
 
     const result = await response.json();
@@ -373,7 +373,7 @@ export const updatePriority = async (id, newPriority) => {
 //   try {
 //     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
 //       method: 'PUT',
-//       headers: { 'Content-Type': 'application/json' },
+//       headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
 //       body: JSON.stringify({
 //         start_date: startDateFormatted,
 //         end_date: endDateFormatted,
