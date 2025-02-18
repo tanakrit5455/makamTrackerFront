@@ -193,9 +193,9 @@ export default function DataTable() {
       //   router.push('/status');
       //   break;
 
-      // case 2:
-      //   router.push('/active-projects');
-      //   break;
+      case 1:
+        router.push('/dashboard/task-tracker');
+        break;
       case 3:
         router.push('/dashboard/timeline');
         break;
@@ -333,6 +333,11 @@ export default function DataTable() {
   };
 
   const columns = [
+    {
+      field: 'id',
+      headerName: 'No.',
+      flex: 1,
+    },
     {
       field: 'projectName',
       headerName: 'Project Name',

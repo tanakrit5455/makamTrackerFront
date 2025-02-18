@@ -63,14 +63,23 @@ const BoardView = () => {
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    const routes = [
-      // '/status',
-      '/dashboard/task-tracker',
-      // '/active-projects',
-      '/dashboard/timeline',
-      '/dashboard/board',
-    ];
-    router.push(routes[newValue] || '/');
+    switch (newValue) {
+      // case 0:
+      //   router.push('/status');
+      //   break;
+
+      case 1:
+        router.push('/dashboard/task-tracker');
+        break;
+      case 3:
+        router.push('/dashboard/timeline');
+        break;
+      case 4:
+        router.push('/dashboard/board');
+        break;
+      default:
+        break;
+    }
   };
 
   return (
