@@ -89,8 +89,7 @@ export default function AddProject({ open, onClose }) {
       !formData.priority ||
       !formData.teamIds.length ||
       !formData.ownerIds.length ||
-      !formData.meetingone ||
-      !formData.start_date
+      !formData.meetingone
     ) {
       console.error('Please fill in all required fields.');
       return;
@@ -133,7 +132,7 @@ export default function AddProject({ open, onClose }) {
       comment: formData.comment,
       link: formData.link,
       // createDate: new Date().toISOString(),
-      startDate: new Date().toISOString(),
+      startDate: formData.start_date ? new Date(formData.start_date).toISOString() : null,
       endDate: formData.end_date ? new Date(formData.end_date).toISOString() : null,
 
       work: '0%',
