@@ -3,9 +3,8 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 
-import { Tab, Box, Tabs, Button, IconButton } from '@mui/material';
+import { Tab, Box, Tabs, IconButton } from '@mui/material';
 import {
-  Add as AddIcon,
   Refresh as RefreshIcon,
   FlashOn as FlashOnIcon,
   MoreHoriz as MoreHorizIcon,

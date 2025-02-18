@@ -362,12 +362,6 @@ export const updatePriority = async (id, newPriority) => {
 //   }
 // };
 
-const formatDate = (dateString) => {
-  if (!dateString) return null; // ป้องกัน undefined
-  const date = new Date(dateString);
-  return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
-};
-
 // export const updateTaskDates = async (id, startDate, endDate) => {
 //   const startDateFormatted = formatDate(startDate);
 //   const endDateFormatted = formatDate(endDate);

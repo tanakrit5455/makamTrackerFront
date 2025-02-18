@@ -4,12 +4,15 @@
 'use client';
 
 import 'gantt-task-react/dist/index.css';
-import { CONFIG } from 'src/config-global';
+
 import { Gantt } from 'gantt-task-react';
 import React, { useRef, useState, useEffect } from 'react';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { Box, Button, Select, MenuItem, Typography, IconButton, FormControl } from '@mui/material';
+
+import { CONFIG } from 'src/config-global';
+
 const baseURL = CONFIG.site.serverUrl;
 const months = [
   'มกราคม',
