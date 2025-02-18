@@ -6,10 +6,18 @@ export const fetchAllData = async () => {
   try {
     const [statusesResponse, prioritiesResponse, ownersResponse, teamsResponse] = await Promise.all(
       [
-        fetch(`${baseURL}/statuses/all-statuses`),
-        fetch(`${baseURL}/priorities/getall-priorities`),
-        fetch(`${baseURL}/owners/getall-owners`),
-        fetch(`${baseURL}/teams/all-teams`),
+        fetch(`${baseURL}/statuses/all-statuses`, {
+          headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+        }),
+        fetch(`${baseURL}/priorities/getall-priorities`, {
+          headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+        }),
+        fetch(`${baseURL}/owners/getall-owners`, {
+          headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+        }),
+        fetch(`${baseURL}/teams/all-teams`, {
+          headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+        }),
       ]
     );
 
@@ -43,7 +51,9 @@ export const fetchAllData = async () => {
 
 export const fetchTaskTrackers = async () => {
   try {
-    const response = await fetch(`${baseURL}/task-trackers/getall-trackers`);
+    const response = await fetch(`${baseURL}/task-trackers/getall-trackers`, {
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+    });
     return await response.json();
   } catch (error) {
     return [];
@@ -52,7 +62,9 @@ export const fetchTaskTrackers = async () => {
 
 export const fetchTaskTrackerWithTeamData = async () => {
   try {
-    const response = await fetch(`${baseURL}/task-trackers/getall-trackerWithTeamData`);
+    const response = await fetch(`${baseURL}/task-trackers/getall-trackerWithTeamData`, {
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+    });
     return await response.json();
   } catch (error) {
     return [];
@@ -61,7 +73,9 @@ export const fetchTaskTrackerWithTeamData = async () => {
 
 export const fetchOwners = async () => {
   try {
-    const response = await fetch(`${baseURL}/owners/getall-owners`);
+    const response = await fetch(`${baseURL}/owners/getall-owners`, {
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+    });
     console.log(response.result);
     return await response.json();
   } catch (error) {
