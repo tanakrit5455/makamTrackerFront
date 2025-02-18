@@ -361,3 +361,64 @@ export const updatePriority = async (id, newPriority) => {
 //     return []; // Return empty array in case of an error
 //   }
 // };
+
+const formatDate = (dateString) => {
+  if (!dateString) return null; // ป้องกัน undefined
+  const date = new Date(dateString);
+  return isNaN(date.getTime()) ? null : date.toISOString().split('T')[0];
+};
+
+// export const updateTaskDates = async (id, startDate, endDate) => {
+//   const startDateFormatted = formatDate(startDate);
+//   const endDateFormatted = formatDate(endDate);
+
+//   console.log(
+//     `🔹 Updating Task ${id}: Start Date = ${startDateFormatted}, End Date = ${endDateFormatted}`
+//   );
+
+//   try {
+//     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+//       method: 'PUT',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify({
+//         start_date: startDateFormatted,
+//         end_date: endDateFormatted,
+//       }),
+//     });
+
+//     if (!response.ok) {
+//       const errorText = await response.text();
+//       throw new Error(`❌ Server Error: ${errorText}`);
+//     }
+
+//     const result = await response.json();
+//     console.log('✅ Task updated successfully:', result);
+//     return result;
+//   } catch (error) {
+//     console.error('❌ Error updating task dates:', error);
+//     throw error;
+//   }
+// };
+
+export const updateTaskDates = async (id, startDate, endDate) => {
+  try {
+    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        start_date: startDate,
+        end_date: endDate,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to update task dates');
+    }
+    const data = await response.json();
+    return data; // จัดการกับข้อมูลที่ได้รับจากการอัปเดต
+  } catch (error) {
+    console.error('Error in updating task:', error);
+    throw error; // ข้อผิดพลาดจะถูกโยนไปยัง frontend เพื่อจัดการ
+  }
+};

@@ -40,6 +40,7 @@ import {
   updateStatus,
   updateProblem,
   updateComment,
+  updatePriority,
   updateMeetingone,
   updateMeetingtwo,
   updateProjectName,
@@ -63,10 +64,12 @@ export default function DataTable() {
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openStatusDialog, setOpenStatusDialog] = useState(false);
+  const [openPriorityDialog, setOpenPriorityDialog] = useState(false);
   const [activeTab, setActiveTab] = useState(1);
   const router = useRouter();
   const [openAddProjectModal, setOpenAddProjectModal] = useState(false);
   const [statusOptions, setStatusOptions] = useState([]);
+  const [priorityOptions, setPriorityOptions] = useState([]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -149,18 +152,35 @@ export default function DataTable() {
     fetchStatusData();
   }, []);
 
+  useEffect(() => {
+    const fetchPriorityData = async () => {
+      try {
+        const response = await fetch(`${baseURL}/priorities/getall-priorities`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch data');
+        }
+        const data = await response.json();
+        setPriorityOptions(data);
+      } catch (error) {
+        console.error('Error fetching priority data:', error);
+      }
+    };
+
+    fetchPriorityData();
+  }, []);
+
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
     switch (newValue) {
-      case 0:
-        router.push('/status');
-        break;
+      // case 0:
+      //   router.push('/status');
+      //   break;
 
-      case 2:
-        router.push('/active-projects');
-        break;
+      // case 2:
+      //   router.push('/active-projects');
+      //   break;
       case 3:
-        router.push('/timeline');
+        router.push('/dashboard/timeline');
         break;
       case 4:
         router.push('/dashboard/board');
@@ -178,11 +198,27 @@ export default function DataTable() {
     setOpenStatusDialog(true);
   };
 
+  const handlePriorityClick = (params) => {
+    setSelectedRowId(params.id);
+
+    console.log('Clicked Priority:', params.value);
+
+    const selectedPriority = priorityOptions.find(
+      (priority) => priority.priorityName === params.value
+    );
+
+    console.log('Matched Priority:', selectedPriority);
+
+    setSelectedValue(selectedPriority ? selectedPriority.priorityId : '');
+
+    setOpenPriorityDialog(true);
+  };
+
   const handleCellClick = (params, field) => {
     setSelectedField(field);
     setSelectedValue(params.value);
     setSelectedRowId(params.id);
-    setOpen(true); // Open the dialog
+    setOpen(true);
   };
 
   const handleOpenDialog = () => {
@@ -233,12 +269,10 @@ export default function DataTable() {
         if (response) {
           setRows((prevRows) =>
             prevRows.map((row) =>
-              row.id === selectedRowId
-                ? { ...row, [selectedField]: selectedValue } // แก้ไขข้อมูลในแถวที่เลือก
-                : row
+              row.id === selectedRowId ? { ...row, [selectedField]: selectedValue } : row
             )
           );
-          setOpen(false); // Close the dialog after saving
+          setOpen(false);
           console.log('Successfully saved');
         } else {
           console.error(`Failed to update ${selectedField}`);
@@ -252,7 +286,7 @@ export default function DataTable() {
   };
 
   if (!isMounted) {
-    return null; // Or a loading state if necessary
+    return null;
   }
 
   const teamColorMap = {
@@ -340,7 +374,6 @@ export default function DataTable() {
       headerName: 'Status',
       flex: 1,
       renderCell: (params) => {
-        // ✅ หา statusName จาก statusOptions ทันที
         const selectedStatus = statusOptions.find((status) => status.statusId === params.value);
         const statusName = selectedStatus ? selectedStatus.statusName : params.value;
 
@@ -369,30 +402,30 @@ export default function DataTable() {
       field: 'ownerNames',
       headerName: 'Owner',
       flex: 1,
-      // renderCell: (params) => (
-      //   <Box
-      //     sx={{
-      //       display: 'flex',
-      //       alignItems: 'center',
-      //       gap: 0.5, // ลดระยะห่างระหว่างไอเท็ม (ปรับค่า gap ตามต้องการ)
-      //       height: '100%', // ทำให้ Box เต็มเซลล์
-      //     }}
-      //   >
-      //     {params.value.map((ownerName, index) => (
-      //       <Chip
-      //         key={index}
-      //         label={ownerName}
-      //         sx={{
-      //           border: 'none', // ไม่มีกรอบ
-      //           background: 'none', // ไม่มีพื้นหลัง
-      //           color: 'inherit', // ใช้สีของข้อความที่กำหนด
-      //           fontWeight: 'normal', // ใช้ฟอนต์ปกติ
-      //           margin: 0, // กำหนด margin ให้เป็น 0 เพื่อลดระยะห่าง
-      //         }}
-      //       />
-      //     ))}
-      //   </Box>
-      // ),
+      renderCell: (params) => (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            height: '100%',
+          }}
+        >
+          {params.value.map((ownerName, index) => (
+            <Chip
+              key={index}
+              label={ownerName}
+              sx={{
+                border: 'none',
+                background: 'none',
+                color: 'inherit',
+                fontWeight: 'normal',
+                margin: 0,
+              }}
+            />
+          ))}
+        </Box>
+      ),
     },
     // { field: 'owner', headerName: 'Owner', flex: 1 },
     {
@@ -405,6 +438,8 @@ export default function DataTable() {
           color={
             params.value === 'High' ? 'error' : params.value === 'Medium' ? 'warning' : 'primary'
           }
+          onClick={() => handlePriorityClick(params)}
+          sx={{ cursor: 'pointer' }}
         />
       ),
     },
@@ -594,6 +629,38 @@ export default function DataTable() {
     }
   };
 
+  const handleSavePriority = async () => {
+    try {
+      if (!selectedRowId || !selectedValue) {
+        return;
+      }
+
+      // เรียก API เพื่ออัปเดต Priority
+      const response = await updatePriority(selectedRowId, selectedValue);
+
+      if (response) {
+        // หา priorityName ที่ตรงกับ selectedValue
+        const selectedPriority = priorityOptions.find(
+          (priority) => priority.priorityId === selectedValue
+        );
+        const priorityName = selectedPriority ? selectedPriority.priorityName : selectedValue;
+
+        // อัปเดต state ของ rows
+        setRows((prevRows) =>
+          prevRows.map((row) =>
+            row.id === selectedRowId ? { ...row, priority: priorityName } : row
+          )
+        );
+
+        setOpenPriorityDialog(false);
+      } else {
+        console.error('Failed to update priority');
+      }
+    } catch (error) {
+      console.error('Error saving priority:', error);
+    }
+  };
+
   const handleOpenAddModal = () => {
     setOpenAddProjectModal(true);
   };
@@ -652,7 +719,6 @@ export default function DataTable() {
           loading={loading}
         />
       </Box>
-      {/* Add Project Modal */}
       {/* แก้สถานะ Modal */}
       <Dialog
         open={openStatusDialog}
@@ -687,6 +753,77 @@ export default function DataTable() {
             Save
           </Button>
           <Button onClick={() => setOpenStatusDialog(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+      {/* แก้ความเร่งด่วน Priority */}
+      <Dialog
+        open={openPriorityDialog}
+        onClose={() => setOpenPriorityDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit Priority</DialogTitle>
+        <DialogContent sx={{ padding: 2 }}>
+          <FormControl fullWidth>
+            {loading ? (
+              <CircularProgress />
+            ) : (
+              <Select value={selectedValue} onChange={(e) => setSelectedValue(e.target.value)}>
+                {statusOptions.map((priority) => (
+                  <MenuItem key={priority.priorityId} value={priority.priorityId}>
+                    {priority.priorityName}
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            color="primary"
+            onClick={() => {
+              console.log('Save new status:', selectedValue);
+              handleSaveStatus();
+            }}
+          >
+            Save
+          </Button>
+          <Button onClick={() => setOpenPriorityDialog(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openPriorityDialog}
+        onClose={() => setOpenPriorityDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit Priority</DialogTitle>
+        <DialogContent sx={{ padding: 2 }}>
+          <FormControl fullWidth>
+            {priorityOptions.length === 0 ? (
+              <CircularProgress />
+            ) : (
+              <Select value={selectedValue} onChange={(e) => setSelectedValue(e.target.value)}>
+                {priorityOptions.map((priority) => (
+                  <MenuItem key={priority.priorityId} value={priority.priorityId}>
+                    {priority.priorityName}
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            color="primary"
+            onClick={() => {
+              console.log('Save new priority:', selectedValue);
+              handleSavePriority();
+            }}
+          >
+            Save
+          </Button>
+          <Button onClick={() => setOpenPriorityDialog(false)}>Cancel</Button>
         </DialogActions>
       </Dialog>
       ;{/* Edit Modal */}

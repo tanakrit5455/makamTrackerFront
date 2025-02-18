@@ -1,0 +1,19 @@
+import React from 'react';
+
+import { Box, Button } from '@mui/material';
+
+const TimelineNavigation = ({ onPrev, onNext, onToday }) => (
+  <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+    <Button variant="contained" onClick={onPrev}>
+      เดือนก่อนหน้า
+    </Button>
+    <Button variant="outlined" onClick={onToday}>
+      วันนี้
+    </Button>
+    <Button variant="contained" onClick={onNext}>
+      เดือนถัดไป
+    </Button>
+  </Box>
+);
+
+export default TimelineNavigation;

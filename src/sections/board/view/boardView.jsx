@@ -64,10 +64,10 @@ const BoardView = () => {
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
     const routes = [
-      '/status',
+      // '/status',
       '/dashboard/task-tracker',
-      '/active-projects',
-      '/timeline',
+      // '/active-projects',
+      '/dashboard/timeline',
       '/dashboard/board',
     ];
     router.push(routes[newValue] || '/');
