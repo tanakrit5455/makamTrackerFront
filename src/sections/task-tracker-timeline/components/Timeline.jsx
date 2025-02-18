@@ -40,7 +40,13 @@ export const ProjectGantt = () => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await fetch(`${baseURL}/task-trackers/getall-trackers`);
+        const response = await fetch(`${baseURL}/task-trackers/getall-trackers`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
         const data = await response.json();
 
         const mappedTasks = data
