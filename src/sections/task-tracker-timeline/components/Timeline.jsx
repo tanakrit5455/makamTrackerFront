@@ -123,7 +123,7 @@ export const ProjectGantt = () => {
         gutterBottom
         sx={{ fontWeight: 600, color: '#374151', marginBottom: '30px' }}
       >
-        2025 Operation Program
+        2025 Task Tracker Program
       </Typography>
 
       <Box
