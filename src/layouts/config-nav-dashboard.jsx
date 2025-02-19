@@ -46,8 +46,8 @@ export const navData = [
   {
     items: [
       { title: 'Task Tracker', path: paths.dashboard.root },
-      { title: 'Board', path: paths.dashboard.two },
-      { title: 'Three', path: paths.dashboard.three },
+      // { title: 'Board', path: paths.dashboard.two },
+      // { title: 'Three', path: paths.dashboard.three },
     ],
   },
   /**
