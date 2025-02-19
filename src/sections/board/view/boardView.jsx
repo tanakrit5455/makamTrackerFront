@@ -23,7 +23,7 @@ import {
 import { fetchTaskTrackers } from '../../../actions/fetchData';
 
 const BoardView = () => {
-  const [activeTab, setActiveTab] = useState(4);
+  const [activeTab, setActiveTab] = useState(2);
   const [columns, setColumns] = useState({
     backlog: { title: 'Backlog', color: 'default', projects: [] },
     planned: { title: 'Planned', color: 'info', projects: [] },
@@ -61,21 +61,23 @@ const BoardView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // โหลดครั้งเดียวตอน mount
 
+  useEffect(() => {
+    if (router.pathname === '/dashboard/task-tracker') setActiveTab(0);
+    else if (router.pathname === '/dashboard/timeline') setActiveTab(1);
+    else if (router.pathname === '/dashboard/board') setActiveTab(2);
+  }, [router.pathname]);
+
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
     switch (newValue) {
-      // case 0:
-      //   router.push('/status');
-      //   break;
-
+      case 0:
+        router.push('/dashboard/task-tracker'); // All Projects
+        break;
       case 1:
-        router.push('/dashboard/task-tracker');
+        router.push('/dashboard/timeline'); // Timeline
         break;
-      case 3:
-        router.push('/dashboard/timeline');
-        break;
-      case 4:
-        router.push('/dashboard/board');
+      case 2:
+        router.push('/dashboard/board'); // Board
         break;
       default:
         break;
@@ -91,9 +93,7 @@ const BoardView = () => {
         scrollButtons="auto"
         aria-label="scrollable tabs"
       >
-        <Tab label="Status" />
         <Tab label="All Projects" />
-        <Tab label="Active Projects" />
         <Tab label="Timeline" />
         <Tab label="Board" />
         <Box sx={{ ml: 'auto', display: 'flex', gap: 1, paddingRight: 3 }}>
