@@ -83,38 +83,40 @@ export default function DataTable() {
         const response = await fetchTaskTrackerWithTeamData();
         const taskTrackers = response?.result;
         if (Array.isArray(taskTrackers)) {
-          const formattedRows = taskTrackers.map((item) => {
-            const teamNames = Array.isArray(item.teamData)
-              ? item.teamData.map((team) => team.team.teamName)
-              : [];
-            const ownerNames = Array.isArray(item.ownerData)
-              ? item.ownerData.map((owner) => owner.owner.ownerName)
-              : [];
+          const formattedRows = taskTrackers
+            .map((item) => {
+              const teamNames = Array.isArray(item.teamData)
+                ? item.teamData.map((team) => team.team.teamName)
+                : [];
+              const ownerNames = Array.isArray(item.ownerData)
+                ? item.ownerData.map((owner) => owner.owner.ownerName)
+                : [];
 
-            return {
-              id: item.trackerId,
-              projectName: item.projectName,
-              problem: item.problem,
-              status: item.status?.statusName || 'N/A',
-              owner: item.owner?.ownerName || 'N/A',
-              priority: item.priority?.priorityName || 'N/A',
-              team: item.team?.teamName || 'N/A',
-              teamDataIds: Array.isArray(item.teamData)
-                ? item.teamData.map((team) => team.teamDataId)
-                : [],
-              teamNames, // ✅ เพิ่ม teamNames
-              ownerDataIds: Array.isArray(item.ownerData)
-                ? item.ownerData.map((owner) => owner.ownerDataId)
-                : [],
-              ownerNames, // ✅ เพิ่ม ownerNames
-              work: item.work,
-              start_date: formatDateRange(item.startDate, item.endDate, item.createDate),
-              link: item.link || 'N/A',
-              comment: item.comment || '',
-              meetingone: item.meetingone || '',
-              meetingtwo: item.meetingtwo || '',
-            };
-          });
+              return {
+                id: item.trackerId,
+                projectName: item.projectName,
+                problem: item.problem,
+                status: item.status?.statusName || 'N/A',
+                owner: item.owner?.ownerName || 'N/A',
+                priority: item.priority?.priorityName || 'N/A',
+                team: item.team?.teamName || 'N/A',
+                teamDataIds: Array.isArray(item.teamData)
+                  ? item.teamData.map((team) => team.teamDataId)
+                  : [],
+                teamNames,
+                ownerDataIds: Array.isArray(item.ownerData)
+                  ? item.ownerData.map((owner) => owner.ownerDataId)
+                  : [],
+                ownerNames,
+                work: item.work,
+                start_date: formatDateRange(item.startDate, item.endDate, item.createDate),
+                link: item.link || 'N/A',
+                comment: item.comment || '',
+                meetingone: item.meetingone || '',
+                meetingtwo: item.meetingtwo || '',
+              };
+            })
+            .sort((a, b) => b.id - a.id); // ✅ เรียงตาม id (มาก -> น้อย)
 
           // ตั้งค่าแถวข้อมูลและ teamMap
           setRows(formattedRows);
@@ -335,15 +337,17 @@ export default function DataTable() {
   };
 
   const columns = [
-    {
-      field: 'id',
-      headerName: 'No.',
-      flex: 1,
-    },
+    // {
+    //   field: 'id',
+    //   headerName: 'No.',
+    //   flex: 1,
+    // },
     {
       field: 'projectName',
       headerName: 'Project Name',
       flex: 1,
+
+      minWidth: 300,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <Typography variant="body2" onClick={() => handleCellClick(params, 'projectName')}>
@@ -357,6 +361,7 @@ export default function DataTable() {
       field: 'problem',
       headerName: 'Problem',
       flex: 1,
+      minWidth: 270,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <Typography
@@ -397,35 +402,46 @@ export default function DataTable() {
       field: 'status',
       headerName: 'Status',
       flex: 1,
+      minWidth: 120,
       renderCell: (params) => {
         const selectedStatus = statusOptions.find((status) => status.statusId === params.value);
         const statusName = selectedStatus ? selectedStatus.statusName : params.value;
 
         return (
-          <Chip
-            label={statusName}
-            color={
-              statusName === 'In progress'
-                ? 'primary'
-                : statusName === 'On Hold'
-                  ? 'warning'
-                  : statusName === 'Completed'
-                    ? 'success'
-                    : statusName === 'Cancelled'
-                      ? 'error'
-                      : 'default'
-            }
-            onClick={() => handleStatusClick(params)}
-            sx={{ cursor: 'pointer' }}
-          />
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: 'auto',
+              minHeight: '60px',
+            }}
+          >
+            <Chip
+              label={statusName}
+              color={
+                statusName === 'In progress'
+                  ? 'primary'
+                  : statusName === 'On Hold'
+                    ? 'warning'
+                    : statusName === 'Completed'
+                      ? 'success'
+                      : statusName === 'Cancelled'
+                        ? 'error'
+                        : 'default'
+              }
+              onClick={() => handleStatusClick(params)}
+              sx={{ cursor: 'pointer', lineHeight: '100%' }}
+            />
+          </Box>
         );
       },
     },
-
     {
       field: 'ownerNames',
       headerName: 'Owner',
       flex: 1,
+      minWidth: 150,
       renderCell: (params) => (
         <Box
           sx={{
@@ -456,15 +472,25 @@ export default function DataTable() {
       field: 'priority',
       headerName: 'Priority',
       flex: 1,
+      minWidth: 110,
       renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={
-            params.value === 'High' ? 'error' : params.value === 'Medium' ? 'warning' : 'primary'
-          }
-          onClick={() => handlePriorityClick(params)}
-          sx={{ cursor: 'pointer' }}
-        />
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+          }}
+        >
+          <Chip
+            label={params.value}
+            color={
+              params.value === 'High' ? 'error' : params.value === 'Medium' ? 'warning' : 'primary'
+            }
+            onClick={() => handlePriorityClick(params)}
+            sx={{ cursor: 'pointer' }}
+          />
+        </Box>
       ),
     },
 
@@ -472,6 +498,7 @@ export default function DataTable() {
       field: 'teamNames',
       headerName: 'Team',
       flex: 1,
+      minWidth: 450,
       renderCell: (params) => (
         <Box
           sx={{
@@ -504,6 +531,7 @@ export default function DataTable() {
       field: 'work',
       headerName: '% Work',
       flex: 1,
+      minWidth: 100,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <Typography
@@ -511,6 +539,7 @@ export default function DataTable() {
             onClick={() => handleCellClick(params, 'work')}
             sx={{
               cursor: 'pointer',
+              justifyContent: 'center',
             }}
           >
             {params.value}
@@ -522,12 +551,24 @@ export default function DataTable() {
       field: 'start_date',
       headerName: 'Date',
       flex: 1,
-      renderCell: (params) => (params.value ? params.value : 'N/A'),
+      minWidth: 230,
+      renderCell: (params) => (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center', // Center the content vertically
+            height: '100%',
+          }}
+        >
+          {params.value ? params.value : 'N/A'}
+        </Box>
+      ),
     },
     {
       field: 'link',
       headerName: 'Link',
       flex: 0.5,
+      minWidth: 230,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           {params.value && params.value !== 'N/A' ? (
@@ -550,6 +591,9 @@ export default function DataTable() {
                   cursor: 'pointer',
                   color: 'defult',
                   textDecoration: 'underline',
+                  whiteSpace: 'pre-line', // Allow line breaks
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               >
                 {params.value}
@@ -565,9 +609,19 @@ export default function DataTable() {
       field: 'comment',
       headerName: 'Comment',
       flex: 1,
+      minWidth: 300,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Typography variant="body2" onClick={() => handleCellClick(params, 'comment')}>
+          <Typography
+            variant="body2"
+            onClick={() => handleCellClick(params, 'comment')}
+            sx={{
+              whiteSpace: 'pre-line', // Allow line breaks
+              overflow: 'hidden',
+              textOverflow: 'ellipsis', // Truncate text with ellipsis
+              cursor: 'pointer',
+            }}
+          >
             {params.value}
           </Typography>
         </Box>
@@ -575,14 +629,18 @@ export default function DataTable() {
     },
     {
       field: 'meetingone',
-      headerName: 'meeting#1',
+      headerName: 'Meeting#1',
       flex: 1,
+      minWidth: 430,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <Typography
             variant="body2"
             onClick={() => handleCellClick(params, 'meeting#1')}
             sx={{
+              whiteSpace: 'pre-line', // Allow line breaks
+              overflow: 'hidden',
+              textOverflow: 'ellipsis', // Truncate text with ellipsis
               cursor: 'pointer',
             }}
           >
@@ -593,14 +651,18 @@ export default function DataTable() {
     },
     {
       field: 'meetingtwo',
-      headerName: 'meeting#2',
+      headerName: 'Meeting#2',
       flex: 1,
+      minWidth: 430,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <Typography
             variant="body2"
             onClick={() => handleCellClick(params, 'meeting#2')}
             sx={{
+              whiteSpace: 'pre-line', // Allow line breaks
+              overflow: 'hidden',
+              textOverflow: 'ellipsis', // Truncate text with ellipsis
               cursor: 'pointer',
             }}
           >
@@ -735,10 +797,31 @@ export default function DataTable() {
         <DataGrid
           rows={rows}
           columns={columns}
-          pageSize={100}
+          pageSize={1000}
           pageSizeOptions={[10, 25, 50, 100]}
           pagination
           loading={loading}
+          getRowHeight={(params) => 'auto'}
+          sx={{
+            '& .MuiDataGrid-columnSeparator': {
+              display: 'inline-flex', // Ensure that column separators are visible
+              backgroundColor: 'rgba(0, 0, 0, 0.12)', // Set the color of the column separators (light gray)
+              width: '1px', // Set the thickness of the vertical line
+            },
+            '& .MuiDataGrid-cell': {
+              whiteSpace: 'pre-line', // Allow line breaks
+              overflow: 'hidden',
+              textOverflow: 'ellipsis', // Truncate text
+              borderRight: '1px solid rgba(0, 0, 0, 0.12)', // Add vertical line to the right of each cell
+              borderBottom: '1px solid rgba(0, 0, 0, 0.12)', // Add horizontal line at the bottom of each cell
+            },
+            '& .MuiDataGrid-columnHeaders': {
+              borderBottom: '2px solid rgba(0, 0, 0, 0.12)', // Optional: Adds a bottom border to the header for separation
+            },
+            '& .MuiDataGrid-row': {
+              borderBottom: '1px solid rgba(0, 0, 0, 0.12)', // Add horizontal line at the bottom of each row
+            },
+          }}
         />
       </Box>
       {/* แก้สถานะ Modal */}
