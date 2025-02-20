@@ -1,3 +1,5 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
+import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 
@@ -11,12 +13,14 @@ import {
   TextField,
   DialogTitle,
   DialogContent,
+  CircularProgress,
 } from '@mui/material';
 
 import { fetchAllData, createTaskTracker } from '../../../actions/fetchData';
 
 export default function AddProject({ open, onClose }) {
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     projectName: '',
     problem: '',
@@ -72,6 +76,7 @@ export default function AddProject({ open, onClose }) {
 
     getData();
   }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'teamIds' || name === 'ownerIds') {
@@ -83,6 +88,8 @@ export default function AddProject({ open, onClose }) {
 
   const handleCreateTaskTracker = async (e) => {
     e.preventDefault();
+
+    // ตรวจสอบข้อมูลที่จำเป็น
     if (
       !formData.projectName ||
       !formData.status ||
@@ -91,9 +98,15 @@ export default function AddProject({ open, onClose }) {
       !formData.ownerIds.length ||
       !formData.meetingone
     ) {
-      console.error('Please fill in all required fields.');
+      Swal.fire({
+        target: document.body,
+        icon: 'warning',
+        title: 'Missing Information',
+        text: 'Please fill in all required fields.',
+      });
       return;
     }
+
     const ownerEntities = formData.ownerIds
       .map((ownerName) => {
         const owner = dropdownOptions.owners.find((o) => o.name === ownerName);
@@ -102,9 +115,15 @@ export default function AddProject({ open, onClose }) {
       .filter(Boolean);
 
     if (!ownerEntities.length) {
-      console.error('Owner(s) not found. Please select a valid owner.');
+      Swal.fire({
+        target: document.body,
+        icon: 'error',
+        title: 'Invalid Owner',
+        text: 'Owner(s) not found. Please select a valid owner.',
+      });
       return;
     }
+
     const teamEntities = formData.teamIds
       .map((teamName) => {
         const team = dropdownOptions.teams.find((t) => t.name === teamName);
@@ -113,9 +132,15 @@ export default function AddProject({ open, onClose }) {
       .filter(Boolean);
 
     if (!teamEntities.length) {
-      console.error('Team(s) not found. Please select a valid team.');
+      Swal.fire({
+        target: document.body,
+        icon: 'error',
+        title: 'Invalid Team',
+        text: 'Team(s) not found. Please select a valid team.',
+      });
       return;
     }
+
     const taskData = {
       projectName: formData.projectName,
       problem: formData.problem,
@@ -131,22 +156,64 @@ export default function AddProject({ open, onClose }) {
       teamIds: teamEntities,
       comment: formData.comment,
       link: formData.link,
-      // createDate: new Date().toISOString(),
       startDate: formData.start_date ? new Date(formData.start_date).toISOString() : null,
       endDate: formData.end_date ? new Date(formData.end_date).toISOString() : null,
-
       work: '0%',
       meetingone: formData.meetingone,
     };
+
     console.log('Task data being sent:', JSON.stringify(taskData, null, 2));
+
+    // ปิดฟอร์มกรอกข้อมูลทันที
+    onClose();
+
+    // แสดง SweetAlert แบบ loading spinner
+    Swal.fire({
+      title: '<strong>กำลังบันทึก...</strong>',
+      html: '<i>โปรดรอสักครู่</i>',
+      allowOutsideClick: false,
+      target: document.body,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+      background: '#f9f9f9',
+      customClass: {
+        popup: 'my-swal-popup',
+        title: 'my-swal-title',
+      },
+    });
+
     try {
       const result = await createTaskTracker(taskData);
       if (result) {
-        console.log('TaskTracker created successfully');
-        onClose();
-        router.push('/dashboard');
+        // รอให้ spinner แสดงสักครู่ จากนั้นแสดงผลลัพธ์
+        setTimeout(() => {
+          Swal.fire({
+            target: document.body,
+            icon: 'success',
+            title: '<span style="font-size: 24px;">บันทึกสำเร็จ</span>',
+            showConfirmButton: false,
+            timer: 1500,
+            background: '#f9f9f9',
+            customClass: {
+              popup: 'my-swal-popup',
+              title: 'my-swal-title',
+            },
+          }).then(() => {
+            // เปลี่ยนเส้นทางไปหน้า dashboard
+            router.push('/dashboard');
+            // รีเฟรชหน้า dashboard เพื่อให้ข้อมูลใหม่แสดงผล
+            router.refresh();
+          });
+        }, 1000);
       }
     } catch (error) {
+      Swal.fire({
+        target: document.body,
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to create project. Please try again.',
+      });
       console.error('Error creating TaskTracker:', error);
     }
   };
@@ -169,7 +236,6 @@ export default function AddProject({ open, onClose }) {
                 margin="normal"
               />
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Problem"
@@ -182,8 +248,6 @@ export default function AddProject({ open, onClose }) {
                 margin="normal"
               />
             </Grid>
-
-            {/* Dropdown Fields for Status, Owner, Priority, Team */}
             <Grid item xs={12} sm={6}>
               <TextField
                 select
@@ -202,7 +266,6 @@ export default function AddProject({ open, onClose }) {
                 ))}
               </TextField>
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <TextField
                 select
@@ -223,7 +286,6 @@ export default function AddProject({ open, onClose }) {
                 ))}
               </TextField>
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <TextField
                 select
@@ -242,7 +304,6 @@ export default function AddProject({ open, onClose }) {
                 ))}
               </TextField>
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <TextField
                 select
@@ -263,8 +324,6 @@ export default function AddProject({ open, onClose }) {
                 ))}
               </TextField>
             </Grid>
-
-            {/* Other form fields */}
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Meeting#1"
@@ -276,7 +335,6 @@ export default function AddProject({ open, onClose }) {
                 margin="normal"
               />
             </Grid>
-
             <Grid item xs={12} sm={3}>
               <TextField
                 label="Start Date"
@@ -290,7 +348,6 @@ export default function AddProject({ open, onClose }) {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-
             <Grid item xs={12} sm={3}>
               <TextField
                 label="End Date"
@@ -304,7 +361,6 @@ export default function AddProject({ open, onClose }) {
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Link"
@@ -315,7 +371,6 @@ export default function AddProject({ open, onClose }) {
                 margin="normal"
               />
             </Grid>
-
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Comment"
@@ -328,14 +383,18 @@ export default function AddProject({ open, onClose }) {
                 margin="normal"
               />
             </Grid>
-
-            <Grid item xs={12} sm={12}>
+            <Grid item xs={12}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-                <Button variant="outlined" color="secondary" onClick={onClose}>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={onClose}
+                  disabled={isSubmitting}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" variant="contained" color="primary">
-                  Save
+                <Button type="submit" variant="contained" color="primary" disabled={isSubmitting}>
+                  {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Save'}
                 </Button>
               </Box>
             </Grid>
