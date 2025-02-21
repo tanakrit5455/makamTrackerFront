@@ -316,57 +316,54 @@ export const updateStatus = async (id, newStatus) => {
 
 export const updateOwner = async (id, newOwnerIds) => {
   try {
-    // Log ค่า id และ newOwnerIds ก่อนส่งคำขอ
     console.log(`Sending request to update owners for ID: ${id}, with owners:`, newOwnerIds);
 
-    // ส่งคำขอ HTTP ไปยัง API ที่ backend
     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ ownerIds: newOwnerIds }), // ใช้ ownerIds เป็น array
+      body: JSON.stringify({ ownerIds: newOwnerIds }),
       headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     });
 
     const result = await response.json();
 
-    // Log ผลลัพธ์ของคำขอ
     if (response.ok) {
       console.log('Response from backend:', result);
-      return result; // ส่งผลลัพธ์กลับหลังจากอัปเดตสำเร็จ
+      return result;
     }
-
-    console.error('Failed to update owners:', result.message);
+    console.error('Failed to update owners:', result.message || 'Unknown error');
     throw new Error(result.message || 'Error updating owners');
   } catch (error) {
     console.error('Error updating owners:', error);
-    throw error; // แสดงข้อผิดพลาด
+    if (error.response) {
+      console.error('Response error:', error.response.data);
+    }
+    throw error;
   }
 };
 
+// updateTeam function for frontend to update teams for task tracker
 export const updateTeam = async (id, newTeamIds) => {
   try {
-    // Log ค่า id และ newTeamIds ก่อนส่งคำขอ
     console.log(`Sending request to update teams for ID: ${id}, with teams:`, newTeamIds);
 
-    // ส่งคำขอ HTTP ไปยัง API ที่ backend
-    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+    const response = await fetch(`${baseURL}/task-trackers/update-trackers/teamdata/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ teamIds: newTeamIds }), // ใช้ teamIds เป็น array
+      body: JSON.stringify({ teamIds: newTeamIds }), // Use teamIds as an array
       headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
     });
 
     const result = await response.json();
 
-    // Log ผลลัพธ์ของคำขอ
     if (response.ok) {
       console.log('Response from backend:', result);
-      return result; // ส่งผลลัพธ์กลับหลังจากอัปเดตสำเร็จ
+      return result;
     }
 
     console.error('Failed to update teams:', result.message);
     throw new Error(result.message || 'Error updating teams');
   } catch (error) {
     console.error('Error updating teams:', error);
-    throw error; // แสดงข้อผิดพลาด
+    throw error;
   }
 };
 

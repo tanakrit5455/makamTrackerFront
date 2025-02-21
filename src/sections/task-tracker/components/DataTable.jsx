@@ -40,6 +40,7 @@ import { formatDateRange } from '../../../utils/formatDate';
 import {
   updateWork,
   updateLink,
+  updateTeam,
   updateOwner,
   updateStatus,
   updateProblem,
@@ -77,6 +78,9 @@ export default function DataTable() {
   const [ownerOptions, setOwnerOptions] = useState([]);
   const [openOwnerDialog, setOpenOwnerDialog] = useState(false);
   const [selectedOwnerIds, setSelectedOwnerIds] = useState([]);
+  const [teamOptions, setTeamOptions] = useState([]);
+  const [openTeamDialog, setOpenTeamDialog] = useState(false);
+  const [selectedTeamIds, setSelectedTeamIds] = useState([]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -221,6 +225,31 @@ export default function DataTable() {
   }, []);
 
   useEffect(() => {
+    const fetchTeamData = async () => {
+      try {
+        const response = await fetch(`${baseURL}/teams/all-teams`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch data');
+        }
+
+        const data = await response.json();
+        setTeamOptions(data);
+      } catch (error) {
+        console.error('Error fetching team data:', error);
+      }
+    };
+
+    fetchTeamData();
+  }, []);
+
+  useEffect(() => {
     if (router.pathname === '/dashboard/task-tracker') setActiveTab(0);
     else if (router.pathname === '/dashboard/timeline') setActiveTab(1);
     else if (router.pathname === '/dashboard/board') setActiveTab(2);
@@ -278,6 +307,12 @@ export default function DataTable() {
     setSelectedRowId(params.id);
     setSelectedValue(params.value || []); // เก็บ ownerNames เป็น Array
     setOpenOwnerDialog(true);
+  };
+
+  const handleTeamClick = (params) => {
+    setSelectedRowId(params.id);
+    setSelectedValue(params.value || []); // เก็บ ownerNames เป็น Array
+    setOpenTeamDialog(true);
   };
 
   const handleOpenDialog = () => {
@@ -599,8 +634,10 @@ export default function DataTable() {
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            height: '100%', // ทำให้ Box เต็มเซลล์
+            height: '100%',
+            cursor: 'pointer',
           }}
+          onClick={() => handleTeamClick(params)} // เมื่อคลิกจะเปิด dialog เพื่อเลือกทีม
         >
           {params.value.map((teamName, index) => {
             const teamColor = teamColorMap[teamName] || 'default';
@@ -609,6 +646,7 @@ export default function DataTable() {
         </Box>
       ),
     },
+
     // {
     //   field: 'teamDataIds',
     //   headerName: 'Team IDs',
@@ -903,16 +941,13 @@ export default function DataTable() {
         return;
       }
 
-      // เรียก API เพื่ออัปเดต Owner
       const response = await updateOwner(selectedRowId, selectedOwnerIds);
 
       if (response) {
-        // แปลง ID เป็นชื่อ
         const ownerNames = selectedOwnerIds.map(
           (id) => ownerOptions.find((owner) => owner.ownerId === id)?.ownerName
         );
 
-        // อัปเดต state ของ rows
         setRows((prevRows) =>
           prevRows.map((row) => (row.id === selectedRowId ? { ...row, ownerNames } : row))
         );
@@ -921,14 +956,14 @@ export default function DataTable() {
 
         Swal.fire({
           title: 'บันทึกสำเร็จ!',
-          text: 'Owner ถูกอัปเดตเรียบร้อยแล้ว',
+          text: 'Owner ถูกอัพเดตเรียบร้อยแล้ว',
           icon: 'success',
           confirmButtonText: 'ตกลง',
         });
       } else {
         Swal.fire({
           title: 'เกิดข้อผิดพลาด!',
-          text: 'ไม่สามารถอัปเดต Owner ได้',
+          text: 'ไม่สามารถอัพเดต Owner ได้',
           icon: 'error',
           confirmButtonText: 'ลองอีกครั้ง',
         });
@@ -937,7 +972,7 @@ export default function DataTable() {
     } catch (error) {
       Swal.fire({
         title: 'ข้อผิดพลาด!',
-        text: `เกิดข้อผิดพลาดขณะอัปเดต Owner: ${error.message}`,
+        text: `เกิดข้อผิดพลาดขณะอัพเดต Owner: ${error.message}`,
         icon: 'error',
         confirmButtonText: 'ตกลง',
       });
@@ -946,11 +981,76 @@ export default function DataTable() {
   };
 
   const handleOwnerChange = (event, ownerId) => {
-    if (event.target.checked) {
-      setSelectedOwnerIds((prevSelectedIds) => [...prevSelectedIds, ownerId]);
-    } else {
-      setSelectedOwnerIds((prevSelectedIds) => prevSelectedIds.filter((id) => id !== ownerId));
+    // ตรวจสอบว่า selectedOwnerIds เป็นอาร์เรย์
+    setSelectedOwnerIds((prevSelectedIds) => {
+      const updatedIds = event.target.checked
+        ? [...prevSelectedIds, ownerId] // ถ้าเลือกเพิ่มเข้าไป
+        : prevSelectedIds.filter((id) => id !== ownerId); // ถ้าไม่เลือกให้ลบ
+      return updatedIds;
+    });
+  };
+
+  const handleSaveTeam = async () => {
+    try {
+      if (!selectedRowId || !selectedTeamIds.length) {
+        Swal.fire({
+          title: 'ข้อมูลไม่ครบ!',
+          text: 'กรุณาเลือกทีมก่อนบันทึก',
+          icon: 'warning',
+          confirmButtonText: 'ตกลง',
+        });
+        return;
+      }
+
+      const teamsArray = Array.isArray(selectedTeamIds) ? selectedTeamIds : [selectedTeamIds];
+
+      const response = await updateTeam(selectedRowId, teamsArray);
+
+      if (response) {
+        const teamNames = teamsArray.map(
+          (id) => teamOptions.find((team) => team.teamId === id)?.teamName
+        );
+
+        setRows((prevRows) =>
+          prevRows.map((row) => (row.id === selectedRowId ? { ...row, teamNames } : row))
+        );
+
+        setOpenTeamDialog(false);
+
+        Swal.fire({
+          title: 'บันทึกสำเร็จ!',
+          text: 'ทีมถูกอัพเดตเรียบร้อยแล้ว',
+          icon: 'success',
+          confirmButtonText: 'ตกลง',
+        });
+      } else {
+        Swal.fire({
+          title: 'เกิดข้อผิดพลาด!',
+          text: 'ไม่สามารถอัพเดตทีมได้',
+          icon: 'error',
+          confirmButtonText: 'ลองอีกครั้ง',
+        });
+        console.error('Failed to update team');
+      }
+    } catch (error) {
+      Swal.fire({
+        title: 'ข้อผิดพลาด!',
+        text: `เกิดข้อผิดพลาดขณะอัพเดตทีม: ${error.message}`,
+        icon: 'error',
+        confirmButtonText: 'ตกลง',
+      });
+      console.error('Error saving team:', error);
     }
+  };
+
+  const handleTeamChange = (event, teamId) => {
+    // ตรวจสอบว่า selectedTeamIds เป็นอาร์เรย์
+    setSelectedTeamIds((prevSelectedIds) => {
+      const updatedIds = event.target.checked
+        ? [...prevSelectedIds, teamId] // ถ้าเลือกเพิ่มเข้าไป
+        : prevSelectedIds.filter((id) => id !== teamId); // ถ้าไม่เลือกให้ลบ
+      return updatedIds;
+    });
   };
 
   const handleOpenAddModal = () => {
@@ -1187,6 +1287,49 @@ export default function DataTable() {
             Save
           </Button>
           <Button onClick={() => setOpenOwnerDialog(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+      {/* ------------------------------- */}
+      <Dialog
+        open={openTeamDialog}
+        onClose={() => setOpenTeamDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit Teams</DialogTitle>
+        <DialogContent sx={{ padding: 2 }}>
+          <FormControl fullWidth>
+            {loading ? (
+              <CircularProgress />
+            ) : (
+              <FormGroup>
+                {teamOptions.map((team) => (
+                  <FormControlLabel
+                    key={team.teamId}
+                    control={
+                      <Checkbox
+                        checked={selectedTeamIds.includes(team.teamId)}
+                        onChange={(e) => handleTeamChange(e, team.teamId)}
+                      />
+                    }
+                    label={team.teamName}
+                  />
+                ))}
+              </FormGroup>
+            )}
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            color="primary"
+            onClick={() => {
+              console.log('Save new teams:', selectedTeamIds);
+              handleSaveTeam(); // ฟังก์ชันสำหรับบันทึกการเลือกทีม
+            }}
+          >
+            Save
+          </Button>
+          <Button onClick={() => setOpenTeamDialog(false)}>Cancel</Button>
         </DialogActions>
       </Dialog>
       {/* ------------------------------- */}
