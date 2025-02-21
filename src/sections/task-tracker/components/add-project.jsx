@@ -244,7 +244,7 @@ export default function AddProject({ open, onClose }) {
                 onChange={handleChange}
                 fullWidth
                 multiline
-                rows={2}
+                // rows={2}
                 margin="normal"
               />
             </Grid>
@@ -260,12 +260,28 @@ export default function AddProject({ open, onClose }) {
                 margin="normal"
               >
                 {dropdownOptions.statuses.map((option) => (
-                  <MenuItem key={option.id} value={option.name}>
+                  <MenuItem
+                    key={option.id}
+                    value={option.name}
+                    style={{
+                      color:
+                        option.name === 'In progress'
+                          ? 'blue' // primary color
+                          : option.name === 'On Hold'
+                            ? 'orange' // warning color
+                            : option.name === 'Completed'
+                              ? 'green' // success color
+                              : option.name === 'Cancelled'
+                                ? 'red' // error color
+                                : 'black', // default color
+                    }}
+                  >
                     {option.name}
                   </MenuItem>
                 ))}
               </TextField>
             </Grid>
+
             <Grid item xs={12} sm={6}>
               <TextField
                 select
@@ -298,12 +314,24 @@ export default function AddProject({ open, onClose }) {
                 margin="normal"
               >
                 {dropdownOptions.priorities.map((option) => (
-                  <MenuItem key={option.id} value={option.name}>
+                  <MenuItem
+                    key={option.id}
+                    value={option.name}
+                    style={{
+                      color:
+                        option.name === 'High'
+                          ? '#f44336' // Red for High
+                          : option.name === 'Medium'
+                            ? '#ff9800' // Orange for Medium
+                            : '#4caf50', // Green for others
+                    }}
+                  >
                     {option.name}
                   </MenuItem>
                 ))}
               </TextField>
             </Grid>
+
             <Grid item xs={12} sm={6}>
               <TextField
                 select
