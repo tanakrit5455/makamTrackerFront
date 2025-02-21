@@ -318,7 +318,7 @@ export const updateOwner = async (id, newOwnerIds) => {
   try {
     console.log(`Sending request to update owners for ID: ${id}, with owners:`, newOwnerIds);
 
-    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+    const response = await fetch(`${baseURL}/task-trackers/update-trackers/ownerdata/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ ownerIds: newOwnerIds }),
       headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
