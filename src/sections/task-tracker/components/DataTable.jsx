@@ -1,5 +1,6 @@
 'use client';
 
+import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 
@@ -19,7 +20,9 @@ import {
   Dialog,
   Select,
   MenuItem,
+  Checkbox,
   TextField,
+  FormGroup,
   IconButton,
   Typography,
   DialogTitle,
@@ -27,6 +30,7 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  FormControlLabel,
 } from '@mui/material';
 
 import { CONFIG } from 'src/config-global';
@@ -70,6 +74,9 @@ export default function DataTable() {
   const [openAddProjectModal, setOpenAddProjectModal] = useState(false);
   const [statusOptions, setStatusOptions] = useState([]);
   const [priorityOptions, setPriorityOptions] = useState([]);
+  const [ownerOptions, setOwnerOptions] = useState([]);
+  const [openOwnerDialog, setOpenOwnerDialog] = useState(false);
+  const [selectedOwnerIds, setSelectedOwnerIds] = useState([]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -189,6 +196,31 @@ export default function DataTable() {
   }, []);
 
   useEffect(() => {
+    const fetchOwnerData = async () => {
+      try {
+        const response = await fetch(`${baseURL}/owners/getall-owners`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch data');
+        }
+
+        const data = await response.json();
+        setOwnerOptions(data);
+      } catch (error) {
+        console.error('Error fetching owner data:', error);
+      }
+    };
+
+    fetchOwnerData();
+  }, []);
+
+  useEffect(() => {
     if (router.pathname === '/dashboard/task-tracker') setActiveTab(0);
     else if (router.pathname === '/dashboard/timeline') setActiveTab(1);
     else if (router.pathname === '/dashboard/board') setActiveTab(2);
@@ -242,6 +274,12 @@ export default function DataTable() {
     setOpen(true);
   };
 
+  const handleOwnerClick = (params) => {
+    setSelectedRowId(params.id);
+    setSelectedValue(params.value || []); // เก็บ ownerNames เป็น Array
+    setOpenOwnerDialog(true);
+  };
+
   const handleOpenDialog = () => {
     setOpen(true);
   };
@@ -281,7 +319,7 @@ export default function DataTable() {
           console.log('Updating Owner');
           response = await updateOwner(selectedRowId, selectedValue);
         } else if (selectedField === 'projectName') {
-          console.log('Updating Owner');
+          console.log('Updating Project Name');
           response = await updateProjectName(selectedRowId, selectedValue);
         }
 
@@ -294,14 +332,47 @@ export default function DataTable() {
             )
           );
           setOpen(false);
+
+          // แสดง SweetAlert2 เมื่อบันทึกสำเร็จ
+          Swal.fire({
+            title: 'บันทึกสำเร็จ!',
+            text: `ข้อมูล ${selectedField} ถูกอัปเดตแล้ว`,
+            icon: 'success',
+            confirmButtonText: 'ตกลง',
+          });
+
           console.log('Successfully saved');
         } else {
+          // แสดง SweetAlert2 เมื่อบันทึกไม่สำเร็จ
+          Swal.fire({
+            title: 'เกิดข้อผิดพลาด!',
+            text: `ไม่สามารถอัปเดต ${selectedField} ได้`,
+            icon: 'error',
+            confirmButtonText: 'ลองอีกครั้ง',
+          });
+
           console.error(`Failed to update ${selectedField}`);
         }
       } catch (error) {
+        // แสดง SweetAlert2 เมื่อเกิดข้อผิดพลาด
+        Swal.fire({
+          title: 'ข้อผิดพลาด!',
+          text: `เกิดข้อผิดพลาดขณะอัปเดต ${selectedField}: ${error.message}`,
+          icon: 'error',
+          confirmButtonText: 'ตกลง',
+        });
+
         console.error(`Error updating ${selectedField}:`, error);
       }
     } else {
+      // แสดง SweetAlert2 เมื่อข้อมูลไม่ครบ
+      Swal.fire({
+        title: 'ข้อมูลไม่ครบ!',
+        text: 'กรุณาเลือกข้อมูลที่ต้องการบันทึก',
+        icon: 'warning',
+        confirmButtonText: 'ตกลง',
+      });
+
       console.error('Missing selectedRowId or selectedValue');
     }
   };
@@ -437,6 +508,36 @@ export default function DataTable() {
         );
       },
     },
+    // {
+    //   field: 'ownerNames',
+    //   headerName: 'Owner',
+    //   flex: 1,
+    //   minWidth: 150,
+    //   renderCell: (params) => (
+    //     <Box
+    //       sx={{
+    //         display: 'flex',
+    //         alignItems: 'center',
+    //         gap: 0.5,
+    //         height: '100%',
+    //       }}
+    //     >
+    //       {params.value.map((ownerName, index) => (
+    //         <Chip
+    //           key={index}
+    //           label={ownerName}
+    //           sx={{
+    //             border: 'none',
+    //             background: 'none',
+    //             color: 'inherit',
+    //             fontWeight: 'normal',
+    //             margin: 0,
+    //           }}
+    //         />
+    //       ))}
+    //     </Box>
+    //   ),
+    // },
     {
       field: 'ownerNames',
       headerName: 'Owner',
@@ -449,24 +550,17 @@ export default function DataTable() {
             alignItems: 'center',
             gap: 0.5,
             height: '100%',
+            cursor: 'pointer',
           }}
+          onClick={() => handleOwnerClick(params)}
         >
           {params.value.map((ownerName, index) => (
-            <Chip
-              key={index}
-              label={ownerName}
-              sx={{
-                border: 'none',
-                background: 'none',
-                color: 'inherit',
-                fontWeight: 'normal',
-                margin: 0,
-              }}
-            />
+            <Chip key={index} label={ownerName} />
           ))}
         </Box>
       ),
     },
+
     // { field: 'owner', headerName: 'Owner', flex: 1 },
     {
       field: 'priority',
@@ -689,6 +783,12 @@ export default function DataTable() {
   const handleSaveStatus = async () => {
     try {
       if (!selectedRowId || !selectedValue) {
+        Swal.fire({
+          title: 'ข้อมูลไม่ครบ!',
+          text: 'กรุณาเลือกสถานะก่อนบันทึก',
+          icon: 'warning',
+          confirmButtonText: 'ตกลง',
+        });
         return;
       }
 
@@ -707,10 +807,29 @@ export default function DataTable() {
         );
 
         setOpenStatusDialog(false);
+
+        Swal.fire({
+          title: 'บันทึกสำเร็จ!',
+          text: 'สถานะถูกอัปเดตเรียบร้อยแล้ว',
+          icon: 'success',
+          confirmButtonText: 'ตกลง',
+        });
       } else {
+        Swal.fire({
+          title: 'เกิดข้อผิดพลาด!',
+          text: 'ไม่สามารถอัปเดตสถานะได้',
+          icon: 'error',
+          confirmButtonText: 'ลองอีกครั้ง',
+        });
         console.error('Failed to update status');
       }
     } catch (error) {
+      Swal.fire({
+        title: 'ข้อผิดพลาด!',
+        text: `เกิดข้อผิดพลาดขณะอัปเดตสถานะ: ${error.message}`,
+        icon: 'error',
+        confirmButtonText: 'ตกลง',
+      });
       console.error('Error saving status:', error);
     }
   };
@@ -718,6 +837,12 @@ export default function DataTable() {
   const handleSavePriority = async () => {
     try {
       if (!selectedRowId || !selectedValue) {
+        Swal.fire({
+          title: 'ข้อมูลไม่ครบ!',
+          text: 'กรุณาเลือกลำดับความสำคัญก่อนบันทึก',
+          icon: 'warning',
+          confirmButtonText: 'ตกลง',
+        });
         return;
       }
 
@@ -739,11 +864,92 @@ export default function DataTable() {
         );
 
         setOpenPriorityDialog(false);
+
+        Swal.fire({
+          title: 'บันทึกสำเร็จ!',
+          text: 'ลำดับความสำคัญถูกอัปเดตเรียบร้อยแล้ว',
+          icon: 'success',
+          confirmButtonText: 'ตกลง',
+        });
       } else {
+        Swal.fire({
+          title: 'เกิดข้อผิดพลาด!',
+          text: 'ไม่สามารถอัปเดตลำดับความสำคัญได้',
+          icon: 'error',
+          confirmButtonText: 'ลองอีกครั้ง',
+        });
         console.error('Failed to update priority');
       }
     } catch (error) {
+      Swal.fire({
+        title: 'ข้อผิดพลาด!',
+        text: `เกิดข้อผิดพลาดขณะอัปเดตลำดับความสำคัญ: ${error.message}`,
+        icon: 'error',
+        confirmButtonText: 'ตกลง',
+      });
       console.error('Error saving priority:', error);
+    }
+  };
+
+  const handleSaveOwner = async () => {
+    try {
+      if (!selectedRowId || !selectedOwnerIds.length) {
+        Swal.fire({
+          title: 'ข้อมูลไม่ครบ!',
+          text: 'กรุณาเลือกเจ้าของก่อนบันทึก',
+          icon: 'warning',
+          confirmButtonText: 'ตกลง',
+        });
+        return;
+      }
+
+      // เรียก API เพื่ออัปเดต Owner
+      const response = await updateOwner(selectedRowId, selectedOwnerIds);
+
+      if (response) {
+        // แปลง ID เป็นชื่อ
+        const ownerNames = selectedOwnerIds.map(
+          (id) => ownerOptions.find((owner) => owner.ownerId === id)?.ownerName
+        );
+
+        // อัปเดต state ของ rows
+        setRows((prevRows) =>
+          prevRows.map((row) => (row.id === selectedRowId ? { ...row, ownerNames } : row))
+        );
+
+        setOpenOwnerDialog(false);
+
+        Swal.fire({
+          title: 'บันทึกสำเร็จ!',
+          text: 'Owner ถูกอัปเดตเรียบร้อยแล้ว',
+          icon: 'success',
+          confirmButtonText: 'ตกลง',
+        });
+      } else {
+        Swal.fire({
+          title: 'เกิดข้อผิดพลาด!',
+          text: 'ไม่สามารถอัปเดต Owner ได้',
+          icon: 'error',
+          confirmButtonText: 'ลองอีกครั้ง',
+        });
+        console.error('Failed to update Owner');
+      }
+    } catch (error) {
+      Swal.fire({
+        title: 'ข้อผิดพลาด!',
+        text: `เกิดข้อผิดพลาดขณะอัปเดต Owner: ${error.message}`,
+        icon: 'error',
+        confirmButtonText: 'ตกลง',
+      });
+      console.error('Error saving owner:', error);
+    }
+  };
+
+  const handleOwnerChange = (event, ownerId) => {
+    if (event.target.checked) {
+      setSelectedOwnerIds((prevSelectedIds) => [...prevSelectedIds, ownerId]);
+    } else {
+      setSelectedOwnerIds((prevSelectedIds) => prevSelectedIds.filter((id) => id !== ownerId));
     }
   };
 
@@ -896,6 +1102,94 @@ export default function DataTable() {
           <Button onClick={() => setOpenPriorityDialog(false)}>Cancel</Button>
         </DialogActions>
       </Dialog>
+      {/* แก้เจ้าของ Owners */}
+      {/* <Dialog
+        open={openOwnerDialog}
+        onClose={() => setOpenOwnerDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit Owner</DialogTitle>
+        <DialogContent sx={{ padding: 2 }}>
+          <FormControl fullWidth>
+            {loading ? (
+              <CircularProgress />
+            ) : (
+              <Select
+                multiple
+                value={selectedOwnerIds}
+                onChange={(e) => setSelectedOwnerIds(e.target.value)}
+                renderValue={(selected) =>
+                  selected
+                    .map((id) => ownerOptions.find((o) => o.ownerId === id)?.ownerName)
+                    .join(', ')
+                }
+              >
+                {ownerOptions.map((owner) => (
+                  <MenuItem key={owner.ownerId} value={owner.ownerId}>
+                    {owner.ownerName}
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            color="primary"
+            onClick={() => {
+              console.log('Save new owner:', selectedOwnerIds);
+              handleSaveOwner();
+            }}
+          >
+            Save
+          </Button>
+          <Button onClick={() => setOpenOwnerDialog(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog> */}
+      <Dialog
+        open={openOwnerDialog}
+        onClose={() => setOpenOwnerDialog(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Edit Owner</DialogTitle>
+        <DialogContent sx={{ padding: 2 }}>
+          <FormControl fullWidth>
+            {loading ? (
+              <CircularProgress />
+            ) : (
+              <FormGroup>
+                {ownerOptions.map((owner) => (
+                  <FormControlLabel
+                    key={owner.ownerId}
+                    control={
+                      <Checkbox
+                        checked={selectedOwnerIds.includes(owner.ownerId)}
+                        onChange={(e) => handleOwnerChange(e, owner.ownerId)}
+                      />
+                    }
+                    label={owner.ownerName}
+                  />
+                ))}
+              </FormGroup>
+            )}
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            color="primary"
+            onClick={() => {
+              console.log('Save new owner:', selectedOwnerIds);
+              handleSaveOwner();
+            }}
+          >
+            Save
+          </Button>
+          <Button onClick={() => setOpenOwnerDialog(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+      {/* ------------------------------- */}
       <Dialog
         open={openPriorityDialog}
         onClose={() => setOpenPriorityDialog(false)}

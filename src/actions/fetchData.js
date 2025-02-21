@@ -229,31 +229,6 @@ export const updateLink = async (id, newLink) => {
   }
 };
 
-export const updateOwner = async (id, newOwner) => {
-  try {
-    console.log(`Request to update owner for TaskTracker ${id}: New value = ${newOwner}`);
-
-    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ owner: newOwner }),
-      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-    });
-
-    const result = await response.json();
-    console.log(`Response from server: ${JSON.stringify(result)}`);
-
-    if (!response.ok) {
-      throw new Error(result.message || 'Error updating owner');
-    }
-
-    console.log(`Successfully updated owner for TaskTracker ${id}.`);
-    return result;
-  } catch (error) {
-    console.error(`Failed to update owner for TaskTracker ${id}. Error: ${error.message}`);
-    throw error;
-  }
-};
-
 export const updateProjectName = async (id, newProjectName) => {
   try {
     console.log(
@@ -335,6 +310,62 @@ export const updateStatus = async (id, newStatus) => {
     throw new Error(result.message || 'Error updating status');
   } catch (error) {
     console.error('Error updating status:', error);
+    throw error; // แสดงข้อผิดพลาด
+  }
+};
+
+export const updateOwner = async (id, newOwnerIds) => {
+  try {
+    // Log ค่า id และ newOwnerIds ก่อนส่งคำขอ
+    console.log(`Sending request to update owners for ID: ${id}, with owners:`, newOwnerIds);
+
+    // ส่งคำขอ HTTP ไปยัง API ที่ backend
+    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ ownerIds: newOwnerIds }), // ใช้ ownerIds เป็น array
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+    });
+
+    const result = await response.json();
+
+    // Log ผลลัพธ์ของคำขอ
+    if (response.ok) {
+      console.log('Response from backend:', result);
+      return result; // ส่งผลลัพธ์กลับหลังจากอัปเดตสำเร็จ
+    }
+
+    console.error('Failed to update owners:', result.message);
+    throw new Error(result.message || 'Error updating owners');
+  } catch (error) {
+    console.error('Error updating owners:', error);
+    throw error; // แสดงข้อผิดพลาด
+  }
+};
+
+export const updateTeam = async (id, newTeamIds) => {
+  try {
+    // Log ค่า id และ newTeamIds ก่อนส่งคำขอ
+    console.log(`Sending request to update teams for ID: ${id}, with teams:`, newTeamIds);
+
+    // ส่งคำขอ HTTP ไปยัง API ที่ backend
+    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ teamIds: newTeamIds }), // ใช้ teamIds เป็น array
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+    });
+
+    const result = await response.json();
+
+    // Log ผลลัพธ์ของคำขอ
+    if (response.ok) {
+      console.log('Response from backend:', result);
+      return result; // ส่งผลลัพธ์กลับหลังจากอัปเดตสำเร็จ
+    }
+
+    console.error('Failed to update teams:', result.message);
+    throw new Error(result.message || 'Error updating teams');
+  } catch (error) {
+    console.error('Error updating teams:', error);
     throw error; // แสดงข้อผิดพลาด
   }
 };
