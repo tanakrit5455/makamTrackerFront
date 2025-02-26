@@ -443,11 +443,14 @@ export default function DataTable() {
   };
 
   const columns = [
-    // {
-    //   field: 'id',
-    //   headerName: 'No.',
-    //   flex: 1,
-    // },
+    {
+      field: 'id',
+      headerName: 'No.',
+      flex: 1,
+      display: 'flex',
+      alignItems: 'center',
+      height: '100%',
+    },
     {
       field: 'projectName',
       headerName: 'Project Name',
@@ -1074,7 +1077,6 @@ export default function DataTable() {
         <Tab label="Timeline" />
         <Tab label="Board" />
 
-        {/* ใช้ Box เพื่อดันปุ่มไปทางขวา */}
         <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
           <IconButton color="default">
             <FilterListIcon />
@@ -1115,7 +1117,7 @@ export default function DataTable() {
               width: '1px', // Set the thickness of the vertical line
             },
             '& .MuiDataGrid-cell': {
-              whiteSpace: 'pre-line', // Allow line breaks
+              // whiteSpace: 'pre-line', // Allow line breaks
               overflow: 'hidden',
               textOverflow: 'ellipsis', // Truncate text
               borderRight: '1px solid rgba(0, 0, 0, 0.12)', // Add vertical line to the right of each cell

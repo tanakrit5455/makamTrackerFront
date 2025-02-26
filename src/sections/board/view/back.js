@@ -1,211 +1,221 @@
-// 'use client';
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-return-assign */
+/* eslint-disable import/no-extraneous-dependencies */
 
-// import { m } from 'framer-motion';
-// import { useRouter } from 'next/navigation'; // ✅ ใช้ next/navigation
-// import React, { useState, useEffect } from 'react';
+'use client';
 
-// import AddIcon from '@mui/icons-material/Add';
-// import FlashOnIcon from '@mui/icons-material/FlashOn';
-// import RefreshIcon from '@mui/icons-material/Refresh';
-// import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-// import FilterListIcon from '@mui/icons-material/FilterList';
-// import {
-//   Box,
-//   Tab,
-//   Grid,
-//   Card,
-//   Tabs,
-//   Button,
-//   Typography,
-//   IconButton,
-//   CardContent,
-// } from '@mui/material';
+import { useState, useEffect } from 'react';
+// eslint-disable-next-line import/no-unresolved
+import { HTML5Backend } from 'react-dnd-html5-backend';
+// eslint-disable-next-line import/no-unresolved
+import { useDrag, useDrop, DndProvider } from 'react-dnd';
 
-// import { fetchTaskTrackers } from '../../../services/fetchData';
+import AddIcon from '@mui/icons-material/Add';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import {
+  Box,
+  Tab,
+  Card,
+  Grid,
+  Chip,
+  Tabs,
+  Button,
+  Typography,
+  IconButton,
+  CardContent,
+} from '@mui/material';
 
-// const BoardView = () => {
-//   const [isMounted, setIsMounted] = useState(false);
-//   const [rows, setRows] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [statusMap, setStatusMap] = useState({});
-//   const [priorityMap, setPriorityMap] = useState({});
-//   const [ownerMap, setOwnerMap] = useState({});
-//   const [teamMap, setTeamMap] = useState({});
-//   const [taskTrackersData, setTaskTrackersData] = useState([]);
-//   const [open, setOpen] = useState(false);
-//   const [selectedField, setSelectedField] = useState('');
-//   const [selectedValue, setSelectedValue] = useState('');
-//   const [selectedRowId, setSelectedRowId] = useState(null);
-//   const [openAddModal, setOpenAddModal] = useState(false);
+import { fetchTaskTrackers, updateStatuschangeColumn } from '../../../actions/fetchData';
 
-//   const [activeTab, setActiveTab] = useState(4); // Default tab is "Board"
-//   const router = useRouter(); // ✅ เปลี่ยนมาใช้ next/navigation
+const ITEM_TYPE = 'CARD';
 
-//   const [columns, setColumns] = useState({
-//     backlog: { title: 'Backlog', color: '#E0E0E0', projects: [] },
-//     planned: { title: 'Planned', color: '#BBDEFB', projects: [] },
-//     inprogress: { title: 'In Progress', color: '#90CAF9', projects: [] },
-//     completed: { title: 'Completed', color: '#C8E6C9', projects: [] },
-//     cancelled: { title: 'Cancelled', color: '#FFCDD2', projects: [] },
-//     onhold: { title: 'On Hold', color: '#FFE082', projects: [] },
-//   });
+const Column = ({ column, moveCard, children }) => {
+  const [, drop] = useDrop({
+    accept: ITEM_TYPE,
+    drop: (item) => {
+      if (!column.id) {
+        console.error('Error: Column ID is undefined', column);
+        return;
+      }
+      moveCard(item, column.id);
+    },
+  });
 
-//   const [draggingColumn, setDraggingColumn] = useState(null);
+  return (
+    <Grid item xs={12} sm={6} md={2} ref={drop}>
+      <Card variant="outlined" sx={{ minHeight: '300px', background: '#f5f5f5' }}>
+        <CardContent>
+          <Chip label={column.title} color={column.color} sx={{ mb: 1 }} />
+          {children}
+        </CardContent>
+      </Card>
+    </Grid>
+  );
+};
 
-//   const handleTabChange = (event, newValue) => {
-//     setActiveTab(newValue);
-//     const routes = [
-//       '/status', // Tab 0: Status
-//       '/dashboard/task-tracker', // Tab 1: All Projects
-//       '/active-projects', // Tab 2: Active Projects
-//       '/timeline', // Tab 3: Timeline
-//       '/dashboard/board', // Tab 4: Board (Make sure this is set to 4)
-//     ];
-//     router.push(routes[newValue] || '/');
-//   };
+const TaskCard = ({ project }) => {
+  const [{ isDragging }, drag] = useDrag({
+    type: ITEM_TYPE,
+    item: project,
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
 
-//   useEffect(() => {
-//     const loadData = async () => {
-//       const taskTrackers = await fetchTaskTrackers();
-//       const newColumns = { ...columns };
-//       Object.keys(newColumns).forEach((key) => {
-//         newColumns[key].projects = [];
-//       });
+  return (
+    <Card ref={drag} sx={{ mb: 1, p: 1, background: isDragging ? '#ddd' : '#fff', cursor: 'grab' }}>
+      <CardContent>
+        <Typography variant="body2">{project.name}</Typography>
+      </CardContent>
+    </Card>
+  );
+};
 
-//       taskTrackers.forEach((tracker) => {
-//         const status = tracker.status?.statusName || 'Unknown';
-//         const columnKey = status.toLowerCase().replace(' ', '') || 'backlog';
-//         if (newColumns[columnKey]) {
-//           newColumns[columnKey].projects.push(tracker.projectName);
-//         }
-//       });
-//       setColumns(newColumns);
-//     };
+const BoardView = () => {
+  const [activeTab, setActiveTab] = useState(4);
+  const [columns, setColumns] = useState({
+    backlog: { id: 'backlog', title: 'Backlog', color: 'default', projects: [] },
+    planned: { id: 'planned', title: 'Planned', color: 'info', projects: [] },
+    inprogress: { id: 'inprogress', title: 'In Progress', color: 'primary', projects: [] },
+    completed: { id: 'completed', title: 'Completed', color: 'success', projects: [] },
+    cancelled: { id: 'cancelled', title: 'Cancelled', color: 'error', projects: [] },
+    onhold: { id: 'onhold', title: 'On Hold', color: 'warning', projects: [] },
+  });
+  useEffect(() => {
+    const loadData = async () => {
+      const taskTrackers = await fetchTaskTrackers();
+      const newColumns = { ...columns };
+      Object.keys(newColumns).forEach((key) => (newColumns[key].projects = []));
 
-//     loadData();
-//   }, [columns]); // Runs once on component mount
+      taskTrackers.forEach((tracker) => {
+        const status = tracker.status?.statusName?.toLowerCase().replace(/\s+/g, '') || 'backlog';
+        if (newColumns[status]) {
+          newColumns[status].projects.push({ id: tracker.trackerId, name: tracker.projectName });
+        }
+      });
 
-//   const onDragStart = (start) => {
-//     setDraggingColumn(start.source.droppableId);
-//   };
+      setColumns(newColumns);
+    };
+    loadData();
+  }, []);
 
-//   const onDragEnd = (result) => {
-//     setDraggingColumn(null);
-//     if (!result.destination) return;
+  const moveCard = async (project, targetColumn) => {
+    console.log(`🔄 Moving project:, project`);
+    console.log(`📌 Target column:, targetColumn`);
 
-//     const sourceColumn = columns[result.source.droppableId];
-//     const destColumn = columns[result.destination.droppableId];
-//     const sourceProjects = [...sourceColumn.projects];
-//     const destProjects = [...destColumn.projects];
-//     const [movedProject] = sourceProjects.splice(result.source.index, 1);
+    if (!targetColumn) {
+      console.error('❌ Error: targetColumn is undefined. Cannot move project:', project);
+      return;
+    }
 
-//     destProjects.splice(result.destination.index, 0, movedProject);
+    if (!project?.id) {
+      console.error(`'❌ Error: Task ID is undefined', project`);
+      return;
+    }
 
-//     setColumns({
-//       ...columns,
-//       [result.source.droppableId]: { ...sourceColumn, projects: sourceProjects },
-//       [result.destination.droppableId]: { ...destColumn, projects: destProjects },
-//     });
-//   };
+    if (!columns[targetColumn]) {
+      console.error(`❌ Error: targetColumn '${targetColumn}' does not exist in columns, columns`);
+      return;
+    }
 
-//   return (
-//     <Box>
-//       <Tabs
-//         value={activeTab}
-//         onChange={handleTabChange}
-//         variant="scrollable"
-//         scrollButtons="auto"
-//         aria-label="scrollable tabs"
-//       >
-//         <Tab label="Status" />
-//         <Tab label="All Projects" />
-//         <Tab label="Active Projects" />
-//         <Tab label="Timeline" />
-//         <Tab label="Board" /> {/* "Board" tab should be selected by default */}
-//         <Box sx={{ ml: 'auto', display: 'flex', gap: 1, paddingRight: 3 }}>
-//           <IconButton color="primary" onClick={() => setOpen(true)}>
-//             <FilterListIcon />
-//           </IconButton>
-//           <IconButton color="primary" onClick={() => setLoading(true)}>
-//             <RefreshIcon />
-//           </IconButton>
-//           <IconButton color="primary">
-//             <FlashOnIcon />
-//           </IconButton>
-//           <IconButton color="primary">
-//             <MoreHorizIcon />
-//           </IconButton>
-//           <Button
-//             variant="contained"
-//             color="primary"
-//             startIcon={<AddIcon />}
-//             onClick={() => setOpenAddModal(true)}
-//           >
-//             Add Project
-//           </Button>
-//         </Box>
-//       </Tabs>
+    // ค้นหา column ต้นทาง
+    const sourceColumn = Object.keys(columns).find((key) =>
+      columns[key].projects.some((p) => p.id === project.id)
+    );
 
-//       {/* Main content */}
-//       <Box sx={{ padding: 2 }}>
-//         <Typography variant="h5" gutterBottom>
-//           2025 Task-Tracker Program
-//         </Typography>
-//         <Typography variant="subtitle1" gutterBottom>
-//           Streamline engineering projects.
-//         </Typography>
+    if (!sourceColumn || sourceColumn === targetColumn) return;
 
-//         <Grid
-//           container
-//           spacing={3}
-//           sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap' }}
-//         >
-//           {Object.entries(columns).map(([columnId, column]) => (
-//             <Grid item key={columnId}>
-//               <Card
-//                 sx={{
-//                   backgroundColor: draggingColumn === columnId ? '#F0F0F0' : column.color,
-//                   color: 'black',
-//                   transition: 'background-color 0.3s ease',
-//                   boxShadow: 3,
-//                   marginBottom: 2,
-//                   width: 'auto',
-//                 }}
-//               >
-//                 <CardContent>
-//                   <Typography variant="h6" sx={{ fontSize: '1rem' }}>
-//                     {column.title}
-//                   </Typography>
-//                   <Box sx={{ minHeight: 100, padding: 1 }}>
-//                     {column.projects.map((project) => (
-//                       <m.div
-//                         key={project}
-//                         whileHover={{ scale: 1.05 }}
-//                         transition={{ duration: 0.2 }}
-//                       >
-//                         <Box
-//                           sx={{
-//                             marginBottom: 2,
-//                             backgroundColor: 'white',
-//                             color: 'black',
-//                             padding: '8px 16px',
-//                             borderRadius: '4px',
-//                             cursor: 'pointer',
-//                           }}
-//                         >
-//                           <Typography sx={{ fontSize: '0.875rem' }}>{project}</Typography>
-//                         </Box>
-//                       </m.div>
-//                     ))}
-//                   </Box>
-//                 </CardContent>
-//               </Card>
-//             </Grid>
-//           ))}
-//         </Grid>
-//       </Box>
-//     </Box>
-//   );
-// };
+    // อัปเดต state
+    const updatedColumns = { ...columns };
+    updatedColumns[sourceColumn].projects = updatedColumns[sourceColumn].projects.filter(
+      (p) => p.id !== project.id
+    );
+    updatedColumns[targetColumn].projects.push(project);
+    setColumns(updatedColumns);
 
-// export default BoardView;
+    try {
+      console.log(`📝 Sending API request:, { id: project.id, status: targetColumn }`);
+      const response = await updateStatuschangeColumn(project.id, targetColumn);
+      console.log(`✅ Updated status for ${project.name} to ${targetColumn}`, response);
+    } catch (error) {
+      console.error('❌ Failed to update status:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (router.pathname === '/dashboard/task-tracker') setActiveTab(0);
+    else if (router.pathname === '/dashboard/timeline') setActiveTab(1);
+    else if (router.pathname === '/dashboard/board') setActiveTab(2);
+  }, [router.pathname]);
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+    switch (newValue) {
+      case 0:
+        router.push('/dashboard/task-tracker'); // All Projects
+        break;
+      case 1:
+        router.push('/dashboard/timeline'); // Timeline
+        break;
+      case 2:
+        router.push('/dashboard/board'); // Board
+        break;
+      default:
+        break;
+    }
+  };
+
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <Box sx={{ p: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          //   onChange={(e, newValue) => setActiveTab(newValue)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ flexGrow: 1 }} // This allows Tabs to take available space
+        >
+          <Tab label="All Projects" />
+          <Tab label="Timeline" />
+          <Tab label="Board" />
+          <Box sx={{ ml: 'auto', display: 'flex', gap: 1, paddingRight: 3 }}>
+            <IconButton color="primary">
+              <FilterListIcon />
+            </IconButton>
+            <IconButton color="primary">
+              <RefreshIcon />
+            </IconButton>
+            <Button variant="contained" color="primary" startIcon={<AddIcon />}>
+              Add Project
+            </Button>
+          </Box>
+        </Tabs>
+
+        <Typography variant="h4" gutterBottom>
+          🚀 2025 Task-Tracker Program
+        </Typography>
+        <Typography variant="subtitle1" gutterBottom>
+          Streamline engineering projects.
+        </Typography>
+
+        <Grid container spacing={2}>
+          {Object.entries(columns).map(([columnId, column]) => (
+            <Column key={columnId} column={column} moveCard={moveCard}>
+              {column.projects.length > 0 ? (
+                column.projects.map((project) => <TaskCard key={project.id} project={project} />)
+              ) : (
+                <Typography variant="body2" color="textSecondary">
+                  + New project
+                </Typography>
+              )}
+            </Column>
+          ))}
+        </Grid>
+      </Box>
+    </DndProvider>
+  );
+};
+
+export default BoardView;

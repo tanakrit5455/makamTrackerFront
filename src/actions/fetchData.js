@@ -314,6 +314,26 @@ export const updateStatus = async (id, newStatus) => {
   }
 };
 
+export const updateStatuschangeColumn = async (id, status) => {
+  try {
+    const response = await fetch(`http://localhost:3000/task-trackers/update-trackers/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }), // 🔥 ต้องตรวจสอบให้แน่ใจว่า API รองรับฟอร์แมตนี้
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server error: ${response.status} - ${errorText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`❌ Error updating status: ${error.message}`);
+    throw error;
+  }
+};
+
 export const updateOwner = async (id, newOwnerIds) => {
   try {
     console.log(`Sending request to update owners for ID: ${id}, with owners:`, newOwnerIds);
@@ -393,6 +413,68 @@ export const updatePriority = async (id, newPriority) => {
     throw error; // แสดงข้อผิดพลาด
   }
 };
+export const updateTaskTrackerDate = async (id, startDate, endDate) => {
+  try {
+    // Log the values of startDate and endDate
+    console.log(`startDate: ${startDate}, endDate: ${endDate}`);
+
+    // ตรวจสอบว่า startDate และ endDate มีค่าหรือไม่
+    if (!startDate || !endDate) {
+      console.error('Start Date or End Date is missing');
+      return { success: false, message: 'Start Date or End Date is missing' }; // คืนค่าผลลัพธ์เมื่อไม่ครบข้อมูล
+    }
+
+    // Log ค่า id, startDate และ endDate ก่อนที่จะส่งคำขอ
+    console.log(`Updating dates for ID: ${id}, Start Date: ${startDate}, End Date: ${endDate}`);
+
+    // ส่งคำขอ HTTP ไปยัง API ที่ backend
+    const response = await fetch(`${baseURL}/task-trackers/update-trackers/dates/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ startDate, endDate }),
+      headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+    });
+
+    const result = await response.json();
+
+    // Log ผลลัพธ์ของคำขอ
+    if (response.ok) {
+      console.log('Response from backend:', result);
+      return { success: true, data: result }; // คืนค่าผลลัพธ์เมื่อสำเร็จ
+    }
+
+    console.error('Failed to update dates:', result.message);
+    return { success: false, message: result.message || 'Error updating dates' }; // คืนค่าผลลัพธ์เมื่อเกิดข้อผิดพลาด
+  } catch (error) {
+    console.error('Error updating dates:', error);
+    return { success: false, message: 'Error updating dates' }; // คืนค่าผลลัพธ์เมื่อเกิดข้อผิดพลาด
+  }
+};
+
+// export const updateDates = async (id, newStartDate, newEndDate) => {
+//   try {
+//     // ส่งคำขอ HTTP ไปยัง API ที่ backend
+//     const response = await fetch(`${baseURL}/task-trackers/update-dates/${id}`, {
+//       method: 'PUT', // ใช้ PUT สำหรับอัปเดต
+//       body: JSON.stringify({
+//         startDate: newStartDate.format('YYYY-MM-DD'), // จัดรูปแบบวันที่ให้เป็น 'YYYY-MM-DD'
+//         endDate: newEndDate.format('YYYY-MM-DD'), // จัดรูปแบบวันที่ให้เป็น 'YYYY-MM-DD'
+//       }),
+//       headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+//     });
+
+//     const result = await response.json();
+
+//     // ถ้าคำขอสำเร็จ
+//     if (response.ok) {
+//       console.log('Response from backend:', result);
+//       return result;
+//     }
+//     throw new Error(result.message || 'Error updating dates');
+//   } catch (error) {
+//     console.error('Error updating dates:', error);
+//     throw error; // แสดงข้อผิดพลาด
+//   }
+// };
 
 // export const fetchTeams = async () => {
 //   try {
@@ -436,25 +518,25 @@ export const updatePriority = async (id, newPriority) => {
 //   }
 // };
 
-export const updateTaskDates = async (id, startDate, endDate) => {
-  try {
-    const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        start_date: startDate,
-        end_date: endDate,
-      }),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to update task dates');
-    }
-    const data = await response.json();
-    return data; // จัดการกับข้อมูลที่ได้รับจากการอัปเดต
-  } catch (error) {
-    console.error('Error in updating task:', error);
-    throw error; // ข้อผิดพลาดจะถูกโยนไปยัง frontend เพื่อจัดการ
-  }
-};
+// export const updateTaskDates = async (id, startDate, endDate) => {
+//   try {
+//     const response = await fetch(`${baseURL}/task-trackers/update-trackers/${id}`, {
+//       method: 'PUT',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify({
+//         start_date: startDate,
+//         end_date: endDate,
+//       }),
+//     });
+//     if (!response.ok) {
+//       throw new Error('Failed to update task dates');
+//     }
+//     const data = await response.json();
+//     return data; // จัดการกับข้อมูลที่ได้รับจากการอัปเดต
+//   } catch (error) {
+//     console.error('Error in updating task:', error);
+//     throw error; // ข้อผิดพลาดจะถูกโยนไปยัง frontend เพื่อจัดการ
+//   }
+// };
