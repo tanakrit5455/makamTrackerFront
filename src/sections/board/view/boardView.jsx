@@ -93,6 +93,7 @@ const BoardView = () => {
     const loadData = async () => {
       const taskTrackers = await fetchTaskTrackers();
       const newColumns = { ...columns };
+      // eslint-disable-next-line no-return-assign
       Object.keys(newColumns).forEach((key) => (newColumns[key].projects = []));
 
       taskTrackers.forEach((tracker) => {
